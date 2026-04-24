@@ -1,58 +1,121 @@
 <script setup lang="ts">
-import { Row, Col, Card, Statistic, List, ListItem, ListItemMeta, Tag, Timeline, TimelineItem, Button, TypographyTitle, TypographyParagraph, TypographyText } from 'ant-design-vue'
+import { ref, onMounted, computed } from 'vue'
+import { RouterLink } from 'vue-router'
+import { useTheme } from '../theme'
 import {
   FileAddOutlined,
   SolutionOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   RocketOutlined,
-  SafetyCertificateOutlined,
-  ThunderboltOutlined,
   AudioOutlined,
   DatabaseOutlined,
   CloudServerOutlined,
-  ApiOutlined,
+  SafetyCertificateOutlined,
+  ThunderboltOutlined,
   TeamOutlined,
+  ApiOutlined,
+  StarOutlined,
+  CrownOutlined,
+  BulbOutlined,
+  HeartOutlined,
+  GlobalOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons-vue'
-import { RouterLink } from 'vue-router'
 
-const overviewStats = [
-  { title: '本周新增简历', value: 128, icon: FileAddOutlined, suffix: '' },
-  { title: '进行中模拟面试', value: 32, icon: SolutionOutlined, suffix: '' },
-  { title: '待处理面试安排', value: 14, icon: CalendarOutlined, suffix: '' },
-  { title: '知识库命中率', value: 92, icon: CheckCircleOutlined, suffix: '%' },
+const { isDark } = useTheme()
+
+// Animated counter
+const animatedStats = ref({
+  resumes: 0,
+  interviews: 0,
+  schedules: 0,
+  accuracy: 0
+})
+
+const targetStats = {
+  resumes: 128,
+  interviews: 32,
+  schedules: 14,
+  accuracy: 92
+}
+
+// Animate counters on mount
+onMounted(() => {
+  const duration = 1500
+  const steps = 60
+  const interval = duration / steps
+
+  let step = 0
+  const timer = setInterval(() => {
+    step++
+    const progress = step / steps
+    const easeOut = 1 - Math.pow(1 - progress, 3)
+
+    animatedStats.value = {
+      resumes: Math.round(targetStats.resumes * easeOut),
+      interviews: Math.round(targetStats.interviews * easeOut),
+      schedules: Math.round(targetStats.schedules * easeOut),
+      accuracy: Math.round(targetStats.accuracy * easeOut)
+    }
+
+    if (step >= steps) clearInterval(timer)
+  }, interval)
+})
+
+const heroStats = [
+  { key: 'resumes', label: '本周新增简历', icon: FileAddOutlined, color: '#6366f1' },
+  { key: 'interviews', label: '进行中模拟面试', icon: SolutionOutlined, color: '#8b5cf6' },
+  { key: 'schedules', label: '待处理面试安排', icon: CalendarOutlined, color: '#ec4899' },
+  { key: 'accuracy', label: '知识库命中率', icon: CheckCircleOutlined, color: '#10b981', suffix: '%' },
 ]
 
-const todoList = [
-  '完成字节专项模拟面试的二轮追问配置',
-  '确认今晚 19:30 的 Zoom 技术面链接有效',
-  '补充系统设计方向知识库文档并重新向量化',
-  '导出候选人王晨的最新模拟面试评估报告',
+const featureModules = [
+  {
+    title: '简历管理',
+    desc: '智能解析多格式简历，自动提取关键信息，支持去重校验与异步分析。',
+    icon: FileAddOutlined,
+    link: '/resumes',
+    gradient: 'gradient-1'
+  },
+  {
+    title: '模拟面试',
+    desc: 'Skill 驱动智能出题，阶段时长联动，追问策略与统一评估体系。',
+    icon: RocketOutlined,
+    link: '/interviews',
+    gradient: 'gradient-2'
+  },
+  {
+    title: '语音面试',
+    desc: '实时语音对话，字幕同步回显，支持暂停恢复与手动提交。',
+    icon: AudioOutlined,
+    link: '/voice-interviews',
+    gradient: 'gradient-3'
+  },
+  {
+    title: '面试安排',
+    desc: '智能解析邀请内容，日程视图管理，状态流转与提醒通知。',
+    icon: CalendarOutlined,
+    link: '/schedules',
+    gradient: 'gradient-4'
+  },
+  {
+    title: '知识库',
+    desc: '文档上传分块向量化，RAG 检索增强，流式问答体验。',
+    icon: DatabaseOutlined,
+    link: '/knowledge',
+    gradient: 'gradient-5'
+  },
+  {
+    title: '运营视图',
+    desc: '全链路数据沉淀，统一后台面板，可视化运营洞察。',
+    icon: CloudServerOutlined,
+    link: '/',
+    gradient: 'gradient-6'
+  },
 ]
 
-const moduleCards = [
-  { title: '简历管理', text: '处理简历上传、内容解析、去重校验、异步分析与 PDF 报告导出。', icon: FileAddOutlined, link: '/resumes' },
-  { title: '模拟面试', text: '支持 Skill 驱动出题、阶段时长联动、追问策略和统一评估。', icon: RocketOutlined, link: '/interviews' },
-  { title: '语音面试', text: '提供实时语音对话、字幕回显、暂停恢复与手动提交能力。', icon: AudioOutlined, link: '/voice-interviews' },
-  { title: '面试安排', text: '解析邀请内容、展示日程视图、管理状态流转和面试提醒。', icon: CalendarOutlined, link: '/schedules' },
-  { title: '知识库', text: '完成文档上传、分块向量化、RAG 检索增强和流式问答。', icon: DatabaseOutlined, link: '/knowledge' },
-  { title: '运营视图', text: '沉淀简历、面试、安排和知识使用情况，形成统一后台数据面板。', icon: CloudServerOutlined, link: '/' },
-]
-
-const capabilities = [
-  '多格式简历解析',
-  'Redis Stream 异步流',
-  'Skill 驱动出题',
-  '统一评估引擎',
-  '实时语音问答',
-  'RAG 检索问答',
-]
-
-const workflowSteps = [
-  { title: '简历管理', desc: '先在简历管理完成上传与解析，再根据分析结果决定是否进入模拟面试。' },
-  { title: '面试训练', desc: '对于重点候选人，优先结合知识库补充岗位材料，再进入文字或语音面试训练。' },
-  { title: '安排协同', desc: '最后通过面试安排页统一管理邀请、提醒和状态流转，避免流程散落。' },
-]
+const chartData = [42, 58, 74, 61, 88, 72, 85, 56, 92, 68, 78, 88]
 
 const pricingPlans = [
   {
@@ -66,156 +129,636 @@ const pricingPlans = [
     name: '专业版',
     price: '¥99',
     period: '/月',
-    features: ['无限简历分析', '无限模拟面试', '语音面试', 'RAG 流式问答', '优先支持'],
+    features: ['无限简历分析', '无限模拟面试', '语音面试功能', 'RAG 流式问答', '优先技术支持'],
     featured: true,
   },
   {
     name: '企业版',
     price: '¥399',
     period: '/月',
-    features: ['全部专业版功能', '团队协作', 'API 接入', '自定义品牌', '专属客户经理'],
+    features: ['全部专业版功能', '团队协作空间', 'API 接入', '自定义品牌', '专属客户经理'],
     featured: false,
   },
+]
+
+const trustBadges = [
+  { icon: SafetyCertificateOutlined, label: '企业级安全' },
+  { icon: GlobalOutlined, label: '全球部署' },
+  { icon: TrophyOutlined, label: '行业领先' },
+  { icon: HeartOutlined, label: '10,000+ 用户信赖' },
+]
+
+const capabilities = [
+  '多格式简历解析',
+  'Redis Stream 异步流',
+  'Skill 驱动出题',
+  '统一评估引擎',
+  '实时语音问答',
+  'RAG 检索问答',
 ]
 </script>
 
 <template>
-  <div style="display: flex; flex-direction: column; gap: 24px">
-    <!-- Hero stats -->
-    <Row :gutter="[16, 16]">
-      <Col v-for="stat in overviewStats" :key="stat.title" :xs="24" :sm="12" :lg="6">
-        <Card hoverable>
-          <Statistic :title="stat.title" :value="stat.value" :suffix="stat.suffix">
-            <template #prefix>
-              <component :is="stat.icon" style="margin-right: 4px" />
-            </template>
-          </Statistic>
-        </Card>
-      </Col>
-    </Row>
+  <div class="dashboard-wrapper">
+    <!-- Mesh gradient background -->
+    <div class="mesh-gradient"></div>
 
-    <!-- Chart + Todo -->
-    <Row :gutter="[16, 16]">
-      <Col :xs="24" :lg="14">
-        <Card title="面试趋势">
-          <div style="display: flex; align-items: flex-end; gap: 12px; height: 180px; padding: 16px 0">
-            <div
-              v-for="(h, i) in [42, 60, 74, 56, 88, 68, 80, 52, 90, 65, 78, 85]"
-              :key="i"
-              style="flex: 1; border-radius: 6px 6px 2px 2px; transition: height 0.3s"
-              :style="{
-                height: h + '%',
-                background: 'linear-gradient(180deg, var(--ant-color-primary), var(--ant-color-primary-bg))',
-                opacity: 0.85,
-              }"
-            />
-          </div>
-          <Row :gutter="16" style="margin-top: 12px">
-            <Col :span="8">
-              <Card size="small">
-                <Statistic title="本周面试" :value="68" />
-              </Card>
-            </Col>
-            <Col :span="8">
-              <Card size="small">
-                <Statistic title="通过率" :value="76" suffix="%" />
-              </Card>
-            </Col>
-            <Col :span="8">
-              <Card size="small">
-                <Statistic title="平均时长" :value="35" suffix="分钟" />
-              </Card>
-            </Col>
-          </Row>
-        </Card>
-      </Col>
-      <Col :xs="24" :lg="10">
-        <Card title="今日待办">
-          <template #extra><Tag>4 项</Tag></template>
-          <List :data-source="todoList" size="small">
-            <template #renderItem="{ item }">
-              <ListItem>
-                <ListItemMeta>
-                  <template #title>
-                    <TypographyText>{{ item }}</TypographyText>
-                  </template>
-                </ListItemMeta>
-              </ListItem>
-            </template>
-          </List>
-        </Card>
-      </Col>
-    </Row>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <p class="hero-eyebrow">AI 驱动的面试管理平台</p>
+        <h1 class="hero-title">一站式面试流程<br/>智能化管理解决方案</h1>
+        <p class="hero-subtitle">
+          从简历解析到模拟面试，从语音对话到知识库检索，全面提升招聘效率与候选人体验
+        </p>
 
-    <!-- Feature cards -->
-    <Card title="模块入口">
-      <Row :gutter="[16, 16]">
-        <Col v-for="card in moduleCards" :key="card.title" :xs="24" :sm="12" :lg="8">
-          <Card hoverable style="cursor: pointer; height: 100%">
-            <RouterLink :to="card.link" style="color: inherit; text-decoration: none">
-              <Card.Meta>
-                <template #avatar>
-                  <component :is="card.icon" style="font-size: 28px; color: var(--ant-color-primary)" />
-                </template>
-                <template #title>{{ card.title }}</template>
-                <template #description>{{ card.text }}</template>
-              </Card.Meta>
-            </RouterLink>
-          </Card>
-        </Col>
-      </Row>
-    </Card>
-
-    <!-- Bottom row: capabilities + workflow -->
-    <Row :gutter="[16, 16]">
-      <Col :xs="24" :lg="12">
-        <Card title="平台能力">
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <Tag v-for="cap in capabilities" :key="cap" color="blue">{{ cap }}</Tag>
-          </div>
-        </Card>
-      </Col>
-      <Col :xs="24" :lg="12">
-        <Card title="推荐操作流程">
-          <Timeline>
-            <TimelineItem v-for="step in workflowSteps" :key="step.title" color="blue">
-              <TypographyTitle :level="5" style="margin: 0">{{ step.title }}</TypographyTitle>
-              <TypographyParagraph type="secondary" style="margin: 4px 0 0">{{ step.desc }}</TypographyParagraph>
-            </TimelineItem>
-          </Timeline>
-        </Card>
-      </Col>
-    </Row>
-
-    <!-- Pricing -->
-    <Card title="版本定价">
-      <Row :gutter="[16, 16]">
-        <Col v-for="plan in pricingPlans" :key="plan.name" :xs="24" :sm="8">
-          <Card
-            :bordered="plan.featured"
-            :style="plan.featured ? 'border-color: var(--ant-color-primary); box-shadow: 0 0 0 1px var(--ant-color-primary)' : ''"
+        <!-- Hero Stats Grid -->
+        <div class="hero-stats-grid">
+          <div
+            v-for="(stat, index) in heroStats"
+            :key="stat.key"
+            class="hero-stat-card"
+            :style="{ animationDelay: `${index * 0.1}s` }"
           >
-            <div v-if="plan.featured" style="margin-bottom: 12px">
-              <Tag color="blue">推荐</Tag>
+            <div class="hero-stat-icon" :style="{ background: stat.color }">
+              <component :is="stat.icon" />
             </div>
-            <TypographyTitle :level="3" style="margin: 0">{{ plan.name }}</TypographyTitle>
-            <div style="margin: 12px 0">
-              <TypographyTitle :level="2" style="margin: 0; display: inline">{{ plan.price }}</TypographyTitle>
-              <TypographyText type="secondary">{{ plan.period }}</TypographyText>
+            <div class="hero-stat-value">
+              {{ animatedStats[stat.key as keyof typeof animatedStats] }}{{ stat.suffix || '' }}
             </div>
-            <List :data-source="plan.features" size="small" :split="false">
-              <template #renderItem="{ item }">
-                <ListItem style="padding: 4px 0; border: none">
-                  <TypographyText>{{ item }}</TypographyText>
-                </ListItem>
-              </template>
-            </List>
-            <Button type="primary" block style="margin-top: 16px" :ghost="!plan.featured">
-              {{ plan.featured ? '立即开始' : '选择版本' }}
-            </Button>
-          </Card>
-        </Col>
-      </Row>
-    </Card>
+            <div class="hero-stat-label">{{ stat.label }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating decorative elements -->
+      <div class="hero-float-1"></div>
+      <div class="hero-float-2"></div>
+      <div class="hero-float-3"></div>
+    </section>
+
+    <!-- Live Data Visualization -->
+    <section class="section-spacing">
+      <div class="section-header">
+        <h2 class="section-title">实时数据概览</h2>
+        <p class="section-subtitle">本周面试活动与关键指标</p>
+      </div>
+
+      <div class="data-grid">
+        <!-- Chart Card -->
+        <div class="glass-card chart-card">
+          <div class="card-header">
+            <h3 class="card-title">面试趋势分析</h3>
+            <span class="card-badge">实时更新</span>
+          </div>
+          <div class="chart-container">
+            <div
+              v-for="(height, i) in chartData"
+              :key="i"
+              class="chart-bar"
+              :style="{
+                height: height + '%',
+                '--bar-index': i,
+                animationDelay: `${i * 0.05}s`
+              }"
+            >
+              <span class="chart-tooltip">{{ height }} 场</span>
+            </div>
+          </div>
+          <div class="chart-labels">
+            <span v-for="i in 12" :key="i">{{ i }}周前</span>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+          <div class="stat-card stat-info">
+            <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+              <SolutionOutlined />
+            </div>
+            <div class="stat-value counter-animated">68</div>
+            <div class="stat-title">本周面试总数</div>
+          </div>
+          <div class="stat-card stat-success">
+            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+              <CheckCircleOutlined />
+            </div>
+            <div class="stat-value counter-animated">76%</div>
+            <div class="stat-title">平均通过率</div>
+          </div>
+          <div class="stat-card stat-warning">
+            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+              <ThunderboltOutlined />
+            </div>
+            <div class="stat-value counter-animated">35</div>
+            <div class="stat-title">平均面试时长(分钟)</div>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-icon" style="background: rgba(139, 92, 246, 0.1); color: #8b5cf6;">
+              <StarOutlined />
+            </div>
+            <div class="stat-value counter-animated">4.8</div>
+            <div class="stat-title">用户满意度评分</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Feature Highlights -->
+    <section class="section-spacing">
+      <div class="section-header">
+        <h2 class="section-title">核心功能模块</h2>
+        <p class="section-subtitle">覆盖面试全流程的智能化解决方案</p>
+      </div>
+
+      <div class="features-grid">
+        <RouterLink
+          v-for="(feature, index) in featureModules"
+          :key="feature.title"
+          :to="feature.link"
+          class="feature-card"
+          :style="{ animationDelay: `${index * 0.08}s` }"
+        >
+          <div class="feature-icon" :class="feature.gradient">
+            <component :is="feature.icon" />
+          </div>
+          <h3 class="feature-title">{{ feature.title }}</h3>
+          <p class="feature-desc">{{ feature.desc }}</p>
+          <div class="feature-arrow">→</div>
+        </RouterLink>
+      </div>
+    </section>
+
+    <!-- Platform Capabilities -->
+    <section class="section-spacing">
+      <div class="capabilities-card glass-card">
+        <div class="capabilities-content">
+          <h2 class="section-title">平台核心能力</h2>
+          <p class="section-subtitle">为现代招聘团队打造的智能化基础设施</p>
+          <div class="capabilities-tags">
+            <span
+              v-for="(cap, i) in capabilities"
+              :key="cap"
+              class="capability-tag"
+              :style="{ animationDelay: `${i * 0.05}s` }"
+            >
+              {{ cap }}
+            </span>
+          </div>
+        </div>
+        <div class="capabilities-visual">
+          <div class="visual-ring ring-1"></div>
+          <div class="visual-ring ring-2"></div>
+          <div class="visual-ring ring-3"></div>
+          <div class="visual-center">
+            <BulbOutlined />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="section-spacing">
+      <div class="section-header">
+        <h2 class="section-title">选择适合您的方案</h2>
+        <p class="section-subtitle">灵活定价，按需扩展</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div
+          v-for="plan in pricingPlans"
+          :key="plan.name"
+          class="pricing-card"
+          :class="{ featured: plan.featured }"
+        >
+          <span v-if="plan.featured" class="pricing-badge">推荐</span>
+          <h3 class="pricing-name">{{ plan.name }}</h3>
+          <div class="pricing-price-row">
+            <span class="pricing-price">{{ plan.price }}</span>
+            <span class="pricing-period">{{ plan.period }}</span>
+          </div>
+          <div class="pricing-features">
+            <div v-for="feature in plan.features" :key="feature" class="pricing-feature">
+              <span class="pricing-feature-icon">✓</span>
+              {{ feature }}
+            </div>
+          </div>
+          <button
+            class="pricing-btn"
+            :class="{ primary: plan.featured }"
+          >
+            {{ plan.featured ? '立即开始' : '选择方案' }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trust Badges -->
+    <section class="trust-section">
+      <div
+        v-for="badge in trustBadges"
+        :key="badge.label"
+        class="trust-badge"
+      >
+        <div class="trust-icon">
+          <component :is="badge.icon" />
+        </div>
+        <span>{{ badge.label }}</span>
+      </div>
+    </section>
   </div>
 </template>
+
+<style scoped>
+@import '../styles/dashboard.css';
+
+.dashboard-wrapper {
+  position: relative;
+  min-height: 100%;
+}
+
+/* Hero specific styles */
+.hero-eyebrow {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+.hero-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 40px;
+}
+
+@media (max-width: 900px) {
+  .hero-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .hero-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hero-stat-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px;
+  animation: fadeSlideUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.hero-stat-value {
+  font-family: 'Geist Mono', 'SF Mono', ui-monospace, monospace;
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  line-height: 1;
+}
+
+.hero-stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 8px;
+}
+
+.hero-float-1,
+.hero-float-2,
+.hero-float-3 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  animation: floatParticle 8s ease-in-out infinite;
+}
+
+.hero-float-1 {
+  width: 300px;
+  height: 300px;
+  background: rgba(99, 102, 241, 0.3);
+  top: 10%;
+  right: 10%;
+}
+
+.hero-float-2 {
+  width: 200px;
+  height: 200px;
+  background: rgba(139, 92, 246, 0.2);
+  bottom: 20%;
+  left: 5%;
+  animation-delay: -3s;
+}
+
+.hero-float-3 {
+  width: 150px;
+  height: 150px;
+  background: rgba(236, 72, 153, 0.2);
+  top: 50%;
+  right: 25%;
+  animation-delay: -5s;
+}
+
+@keyframes floatParticle {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 15px) scale(0.9); }
+}
+
+/* Section styles */
+.section-spacing {
+  margin-top: 48px;
+}
+
+.section-header {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-family: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+/* Data visualization */
+.data-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .data-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-card {
+  padding: 32px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.card-title {
+  font-family: 'Geist', 'SF Pro Display', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.card-badge {
+  font-size: 12px;
+  padding: 4px 12px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border-radius: 20px;
+}
+
+.chart-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.chart-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.chart-bar {
+  position: relative;
+  cursor: pointer;
+}
+
+.chart-bar:hover .chart-tooltip {
+  opacity: 1;
+}
+
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .quick-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Features grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1000px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature-card {
+  display: block;
+  text-decoration: none;
+  animation: fadeSlideUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.feature-arrow {
+  margin-top: 20px;
+  font-size: 18px;
+  color: var(--accent-primary);
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Capabilities */
+.capabilities-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 48px;
+  gap: 48px;
+}
+
+@media (max-width: 800px) {
+  .capabilities-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.capabilities-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.capability-tag {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 24px;
+  font-size: 14px;
+  color: var(--text-primary);
+  animation: fadeSlideUp 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.capabilities-visual {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+}
+
+.visual-ring {
+  position: absolute;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 50%;
+  animation: ringPulse 4s ease-in-out infinite;
+}
+
+.ring-1 { inset: 0; animation-delay: 0s; }
+.ring-2 { inset: 20px; animation-delay: 0.5s; }
+.ring-3 { inset: 40px; animation-delay: 1s; }
+
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.visual-center {
+  position: absolute;
+  inset: 60px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: white;
+}
+
+/* Pricing */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+.pricing-price-row {
+  margin: 24px 0;
+}
+
+.pricing-features {
+  margin: 24px 0;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 24px;
+}
+
+.pricing-btn {
+  width: 100%;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: 2px solid var(--glass-border);
+  color: var(--text-primary);
+}
+
+.pricing-btn.primary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+}
+
+.pricing-btn:hover {
+  transform: translateY(-2px);
+}
+
+.pricing-btn.primary:hover {
+  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+}
+</style>
