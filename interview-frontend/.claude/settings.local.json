@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm ls *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(npx vue-tsc *)",
+      "Bash(rm src/styles.css src/components/PageHeader.vue)",
+      "Bash(rmdir src/components)"
+    ]
+  }
+}
