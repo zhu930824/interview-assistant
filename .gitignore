@@ -5,3 +5,6 @@ dist/
 .vscode/
 data/
 *.log
+/.m2-project/
+/interview-frontend/dist
+/interview-frontend/node_modules
