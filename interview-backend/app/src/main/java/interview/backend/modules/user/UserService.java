@@ -41,15 +41,15 @@ public class UserService {
         User user = userRepository.selectOne(
                 new QueryWrapper<User>().eq("username", request.username())
         );
-        if (user == null || !passwordEncoder.matches(request.password(), user.passwordHash())) {
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new BizException("用户名或密码错误");
         }
-        if (!user.enabled()) {
+        if (!user.isEnabled()) {
             throw new BizException("账户已被禁用");
         }
 
-        String token = jwtUtils.generateToken(user.id(), user.username(), user.role().name());
-        return new LoginResponse(token, user.username(), user.role().name());
+        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getRole().name());
+        return new LoginResponse(token, user.getUsername(), user.getRole().name());
     }
 
     public UserInfo getCurrentUser(Long userId) {
@@ -57,6 +57,6 @@ public class UserService {
         if (user == null) {
             throw new BizException("用户不存在");
         }
-        return new UserInfo(user.id(), user.username(), user.role().name());
+        return new UserInfo(user.getId(), user.getUsername(), user.getRole().name());
     }
 }
