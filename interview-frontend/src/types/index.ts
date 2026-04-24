@@ -4,6 +4,8 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export * from './auth';
+
 export interface ResumeRecord {
   id: number;
   fileName: string;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, h } from 'vue'
-import { RouterView, RouterLink, useRoute } from 'vue-router'
+import { computed, ref, h, onMounted } from 'vue'
+import { RouterView, RouterLink, useRoute, useRouter } from 'vue-router'
 import {
   Layout,
   LayoutSider,
@@ -29,14 +29,22 @@ import {
   UserOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons-vue'
 import { useTheme } from '../theme'
+import { useAuth } from '../stores/auth'
 import '../styles/dashboard.css'
 
 const route = useRoute()
+const router = useRouter()
 const { isDark, toggleTheme } = useTheme()
+const auth = useAuth()
 
 const collapsed = ref(false)
+
+onMounted(() => {
+  auth.fetchUser()
+})
 
 const menuItems = [
   { key: '/', icon: DashboardOutlined, label: '面试中心' },
@@ -55,6 +63,13 @@ const breadcrumbItems = computed(() => {
 
 const onSearch = (value: string) => {
   console.log('Search:', value)
+}
+
+const handleMenuClick = ({ key }: { key: string | number }) => {
+  if (key === 'logout') {
+    auth.logout()
+    router.push('/login')
+  }
 }
 </script>
 
@@ -129,12 +144,17 @@ const onSearch = (value: string) => {
               <template #unCheckedChildren><BulbOutlined /></template>
             </Switch>
           </div>
-          <Dropdown>
-            <Avatar class="header-avatar" :icon="h(UserOutlined)" />
+          <Dropdown @click.prevent>
+            <div class="user-info">
+              <Avatar class="header-avatar" :icon="h(UserOutlined)" />
+              <span class="user-name">{{ auth.user.value?.username || '用户' }}</span>
+            </div>
             <template #overlay>
-              <DropdownMenu>
+              <DropdownMenu @click="handleMenuClick">
                 <DropdownMenu.Item key="settings">设置</DropdownMenu.Item>
-                <DropdownMenu.Item key="logout">退出</DropdownMenu.Item>
+                <DropdownMenu.Item key="logout">
+                  <LogoutOutlined /> 退出登录
+                </DropdownMenu.Item>
               </DropdownMenu>
             </template>
           </Dropdown>
@@ -313,6 +333,25 @@ const onSearch = (value: string) => {
 .header-avatar {
   cursor: pointer;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .user-name {
+    display: none;
+  }
 }
 
 .content-custom {

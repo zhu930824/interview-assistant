@@ -10,10 +10,22 @@ import InterviewPage from './pages/InterviewPage.vue'
 import VoiceInterviewPage from './pages/VoiceInterviewPage.vue'
 import SchedulePage from './pages/SchedulePage.vue'
 import KnowledgePage from './pages/KnowledgePage.vue'
+import LoginPage from './pages/LoginPage.vue'
+import RegisterPage from './pages/RegisterPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
+    {
+      path: '/login',
+      component: LoginPage,
+      meta: { public: true }
+    },
+    {
+      path: '/register',
+      component: RegisterPage,
+      meta: { public: true }
+    },
     {
       path: '/',
       component: AdminLayout,
@@ -51,6 +63,19 @@ const router = createRouter({
       ]
     }
   ]
+})
+
+router.beforeEach((to, _from, next) => {
+  const token = localStorage.getItem('auth_token')
+  const isPublicRoute = to.matched.some(record => record.meta.public)
+
+  if (!token && !isPublicRoute) {
+    next('/login')
+  } else if (token && isPublicRoute) {
+    next('/')
+  } else {
+    next()
+  }
 })
 
 const app = createApp(App)
