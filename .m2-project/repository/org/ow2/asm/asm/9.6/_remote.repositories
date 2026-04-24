@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Apr 24 16:06:12 CST 2026
+asm-9.6.jar>aliyun-public-mirror=
+asm-9.6.jar>nexus=
+asm-9.6.pom>aliyun-public-mirror=
+asm-9.6.pom>nexus=

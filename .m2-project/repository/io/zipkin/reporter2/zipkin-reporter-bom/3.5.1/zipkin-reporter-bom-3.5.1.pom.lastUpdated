@@ -1,0 +1,5 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Apr 24 16:03:37 CST 2026
+@default-aliyun-public-mirror-https\://maven.aliyun.com/repository/public/.lastUpdated=1777017817645
+http\://maven.aliyun.com/nexus/content/repositories/central/.lastUpdated=1777017817795
+https\://maven.aliyun.com/repository/public/.error=Could not transfer artifact io.zipkin.reporter2\:zipkin-reporter-bom\:pom\:3.5.1 from/to aliyun-public-mirror (https\://maven.aliyun.com/repository/public)\: Connect to maven.aliyun.com\:443 [maven.aliyun.com/198.18.0.174] failed\: Connect timed out

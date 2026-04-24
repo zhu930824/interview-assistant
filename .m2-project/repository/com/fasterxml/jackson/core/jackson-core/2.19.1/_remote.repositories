@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Apr 24 16:06:09 CST 2026
+jackson-core-2.19.1.jar>aliyun-public-mirror=
+jackson-core-2.19.1.jar>nexus=
+jackson-core-2.19.1.pom>aliyun-public-mirror=
+jackson-core-2.19.1.pom>nexus=

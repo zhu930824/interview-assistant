@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Apr 24 16:06:09 CST 2026
+jsonassert-1.5.3.jar>aliyun-public-mirror=
+jsonassert-1.5.3.jar>nexus=
+jsonassert-1.5.3.pom>aliyun-public-mirror=
+jsonassert-1.5.3.pom>nexus=

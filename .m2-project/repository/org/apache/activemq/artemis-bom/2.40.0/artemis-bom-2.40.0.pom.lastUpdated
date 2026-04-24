@@ -1,0 +1,5 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Apr 24 16:05:49 CST 2026
+@default-alimaven-http\://maven.aliyun.com/nexus/content/repositories/central/.lastUpdated=1777017807616
+http\://maven.aliyun.com/nexus/content/repositories/central/.error=Could not transfer artifact org.apache.activemq\:artemis-bom\:pom\:2.40.0 from/to alimaven (http\://maven.aliyun.com/nexus/content/repositories/central/)\: Connect to maven.aliyun.com\:80 [maven.aliyun.com/198.18.0.174] failed\: Connect timed out
+https\://maven.aliyun.com/repository/public/.lastUpdated=1777017949515
