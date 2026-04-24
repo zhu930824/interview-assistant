@@ -1,174 +1,221 @@
 <script setup lang="ts">
-const overviewStats = [
-  { label: "本周新增简历", value: "128", note: "待分析 19 份" },
-  { label: "进行中模拟面试", value: "32", note: "语音场次占比 41%" },
-  { label: "待处理面试安排", value: "14", note: "今日提醒 6 条" },
-  { label: "知识库问答命中率", value: "92%", note: "近 7 日稳定提升" }
-];
+import { Row, Col, Card, Statistic, List, ListItem, ListItemMeta, Tag, Timeline, TimelineItem, Button, TypographyTitle, TypographyParagraph, TypographyText } from 'ant-design-vue'
+import {
+  FileAddOutlined,
+  SolutionOutlined,
+  CalendarOutlined,
+  CheckCircleOutlined,
+  RocketOutlined,
+  SafetyCertificateOutlined,
+  ThunderboltOutlined,
+  AudioOutlined,
+  DatabaseOutlined,
+  CloudServerOutlined,
+  ApiOutlined,
+  TeamOutlined,
+} from '@ant-design/icons-vue'
+import { RouterLink } from 'vue-router'
 
-const pipelineCards = [
-  {
-    title: "简历分析队列",
-    desc: "Redis Stream 异步处理正在稳定运行，支持失败重试和重复检测。",
-    status: "分析中 7 份"
-  },
-  {
-    title: "统一评估引擎",
-    desc: "文字面试和语音面试统一进入结构化评估流程，便于横向对比。",
-    status: "报告待导出 5 份"
-  },
-  {
-    title: "语音会话监控",
-    desc: "实时记录字幕、延迟与会话时长，为体验调优提供数据支持。",
-    status: "平均首包 230ms"
-  }
-];
+const overviewStats = [
+  { title: '本周新增简历', value: 128, icon: FileAddOutlined, suffix: '' },
+  { title: '进行中模拟面试', value: 32, icon: SolutionOutlined, suffix: '' },
+  { title: '待处理面试安排', value: 14, icon: CalendarOutlined, suffix: '' },
+  { title: '知识库命中率', value: 92, icon: CheckCircleOutlined, suffix: '%' },
+]
 
 const todoList = [
-  "完成字节专项模拟面试的二轮追问配置",
-  "确认今晚 19:30 的 Zoom 技术面链接有效",
-  "补充系统设计方向知识库文档并重新向量化",
-  "导出候选人王晨的最新模拟面试评估报告"
-];
+  '完成字节专项模拟面试的二轮追问配置',
+  '确认今晚 19:30 的 Zoom 技术面链接有效',
+  '补充系统设计方向知识库文档并重新向量化',
+  '导出候选人王晨的最新模拟面试评估报告',
+]
 
 const moduleCards = [
+  { title: '简历管理', text: '处理简历上传、内容解析、去重校验、异步分析与 PDF 报告导出。', icon: FileAddOutlined, link: '/resumes' },
+  { title: '模拟面试', text: '支持 Skill 驱动出题、阶段时长联动、追问策略和统一评估。', icon: RocketOutlined, link: '/interviews' },
+  { title: '语音面试', text: '提供实时语音对话、字幕回显、暂停恢复与手动提交能力。', icon: AudioOutlined, link: '/voice-interviews' },
+  { title: '面试安排', text: '解析邀请内容、展示日程视图、管理状态流转和面试提醒。', icon: CalendarOutlined, link: '/schedules' },
+  { title: '知识库', text: '完成文档上传、分块向量化、RAG 检索增强和流式问答。', icon: DatabaseOutlined, link: '/knowledge' },
+  { title: '运营视图', text: '沉淀简历、面试、安排和知识使用情况，形成统一后台数据面板。', icon: CloudServerOutlined, link: '/' },
+]
+
+const capabilities = [
+  '多格式简历解析',
+  'Redis Stream 异步流',
+  'Skill 驱动出题',
+  '统一评估引擎',
+  '实时语音问答',
+  'RAG 检索问答',
+]
+
+const workflowSteps = [
+  { title: '简历管理', desc: '先在简历管理完成上传与解析，再根据分析结果决定是否进入模拟面试。' },
+  { title: '面试训练', desc: '对于重点候选人，优先结合知识库补充岗位材料，再进入文字或语音面试训练。' },
+  { title: '安排协同', desc: '最后通过面试安排页统一管理邀请、提醒和状态流转，避免流程散落。' },
+]
+
+const pricingPlans = [
   {
-    title: "简历管理",
-    text: "处理简历上传、内容解析、去重校验、异步分析与 PDF 报告导出。"
+    name: '免费版',
+    price: '¥0',
+    period: '/月',
+    features: ['5 份简历分析/月', '3 次模拟面试/月', '基础知识库', '邮件支持'],
+    featured: false,
   },
   {
-    title: "模拟面试",
-    text: "支持 Skill 驱动出题、阶段时长联动、追问策略和统一评估。"
+    name: '专业版',
+    price: '¥99',
+    period: '/月',
+    features: ['无限简历分析', '无限模拟面试', '语音面试', 'RAG 流式问答', '优先支持'],
+    featured: true,
   },
   {
-    title: "语音面试",
-    text: "提供实时语音对话、字幕回显、暂停恢复与手动提交能力。"
+    name: '企业版',
+    price: '¥399',
+    period: '/月',
+    features: ['全部专业版功能', '团队协作', 'API 接入', '自定义品牌', '专属客户经理'],
+    featured: false,
   },
-  {
-    title: "面试安排",
-    text: "解析邀请内容、展示日程视图、管理状态流转和面试提醒。"
-  },
-  {
-    title: "知识库",
-    text: "完成文档上传、分块向量化、RAG 检索增强和流式问答。"
-  },
-  {
-    title: "运营视图",
-    text: "沉淀简历、面试、安排和知识使用情况，形成统一后台数据面板。"
-  }
-];
+]
 </script>
 
 <template>
-  <section class="page">
-    <div class="page-head">
-      <p class="eyebrow">运营总览</p>
-      <h2>面试流程一站式管理面板</h2>
-      <p class="muted">
-        这个首页现在作为后台总览使用，重点展示候选人进度、系统状态、模块入口和今日待办。
-      </p>
-    </div>
+  <div style="display: flex; flex-direction: column; gap: 24px">
+    <!-- Hero stats -->
+    <Row :gutter="[16, 16]">
+      <Col v-for="stat in overviewStats" :key="stat.title" :xs="24" :sm="12" :lg="6">
+        <Card hoverable>
+          <Statistic :title="stat.title" :value="stat.value" :suffix="stat.suffix">
+            <template #prefix>
+              <component :is="stat.icon" style="margin-right: 4px" />
+            </template>
+          </Statistic>
+        </Card>
+      </Col>
+    </Row>
 
-    <div class="grid four">
-      <article v-for="stat in overviewStats" :key="stat.label" class="stat">
-        <small>{{ stat.label }}</small>
-        <strong>{{ stat.value }}</strong>
-        <p class="muted">{{ stat.note }}</p>
-      </article>
-    </div>
-
-    <div class="grid two">
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">关键流程</p>
-            <h3>系统当前的重点推进事项</h3>
+    <!-- Chart + Todo -->
+    <Row :gutter="[16, 16]">
+      <Col :xs="24" :lg="14">
+        <Card title="面试趋势">
+          <div style="display: flex; align-items: flex-end; gap: 12px; height: 180px; padding: 16px 0">
+            <div
+              v-for="(h, i) in [42, 60, 74, 56, 88, 68, 80, 52, 90, 65, 78, 85]"
+              :key="i"
+              style="flex: 1; border-radius: 6px 6px 2px 2px; transition: height 0.3s"
+              :style="{
+                height: h + '%',
+                background: 'linear-gradient(180deg, var(--ant-color-primary), var(--ant-color-primary-bg))',
+                opacity: 0.85,
+              }"
+            />
           </div>
-          <span class="pill">实时更新</span>
-        </div>
+          <Row :gutter="16" style="margin-top: 12px">
+            <Col :span="8">
+              <Card size="small">
+                <Statistic title="本周面试" :value="68" />
+              </Card>
+            </Col>
+            <Col :span="8">
+              <Card size="small">
+                <Statistic title="通过率" :value="76" suffix="%" />
+              </Card>
+            </Col>
+            <Col :span="8">
+              <Card size="small">
+                <Statistic title="平均时长" :value="35" suffix="分钟" />
+              </Card>
+            </Col>
+          </Row>
+        </Card>
+      </Col>
+      <Col :xs="24" :lg="10">
+        <Card title="今日待办">
+          <template #extra><Tag>4 项</Tag></template>
+          <List :data-source="todoList" size="small">
+            <template #renderItem="{ item }">
+              <ListItem>
+                <ListItemMeta>
+                  <template #title>
+                    <TypographyText>{{ item }}</TypographyText>
+                  </template>
+                </ListItemMeta>
+              </ListItem>
+            </template>
+          </List>
+        </Card>
+      </Col>
+    </Row>
 
-        <div class="list">
-          <article v-for="card in pipelineCards" :key="card.title" class="item">
-            <div class="item-head">
-              <strong>{{ card.title }}</strong>
-              <span class="pill">{{ card.status }}</span>
+    <!-- Feature cards -->
+    <Card title="模块入口">
+      <Row :gutter="[16, 16]">
+        <Col v-for="card in moduleCards" :key="card.title" :xs="24" :sm="12" :lg="8">
+          <Card hoverable style="cursor: pointer; height: 100%">
+            <RouterLink :to="card.link" style="color: inherit; text-decoration: none">
+              <Card.Meta>
+                <template #avatar>
+                  <component :is="card.icon" style="font-size: 28px; color: var(--ant-color-primary)" />
+                </template>
+                <template #title>{{ card.title }}</template>
+                <template #description>{{ card.text }}</template>
+              </Card.Meta>
+            </RouterLink>
+          </Card>
+        </Col>
+      </Row>
+    </Card>
+
+    <!-- Bottom row: capabilities + workflow -->
+    <Row :gutter="[16, 16]">
+      <Col :xs="24" :lg="12">
+        <Card title="平台能力">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <Tag v-for="cap in capabilities" :key="cap" color="blue">{{ cap }}</Tag>
+          </div>
+        </Card>
+      </Col>
+      <Col :xs="24" :lg="12">
+        <Card title="推荐操作流程">
+          <Timeline>
+            <TimelineItem v-for="step in workflowSteps" :key="step.title" color="blue">
+              <TypographyTitle :level="5" style="margin: 0">{{ step.title }}</TypographyTitle>
+              <TypographyParagraph type="secondary" style="margin: 4px 0 0">{{ step.desc }}</TypographyParagraph>
+            </TimelineItem>
+          </Timeline>
+        </Card>
+      </Col>
+    </Row>
+
+    <!-- Pricing -->
+    <Card title="版本定价">
+      <Row :gutter="[16, 16]">
+        <Col v-for="plan in pricingPlans" :key="plan.name" :xs="24" :sm="8">
+          <Card
+            :bordered="plan.featured"
+            :style="plan.featured ? 'border-color: var(--ant-color-primary); box-shadow: 0 0 0 1px var(--ant-color-primary)' : ''"
+          >
+            <div v-if="plan.featured" style="margin-bottom: 12px">
+              <Tag color="blue">推荐</Tag>
             </div>
-            <p class="muted">{{ card.desc }}</p>
-          </article>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">今日待办</p>
-            <h3>建议优先完成的动作</h3>
-          </div>
-          <span class="pill">4 项</span>
-        </div>
-
-        <div class="list dense">
-          <article v-for="task in todoList" :key="task" class="item">
-            {{ task }}
-          </article>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">模块入口</p>
-          <h3>按业务动作进入不同工作区</h3>
-        </div>
-      </div>
-
-      <div class="grid three">
-        <article v-for="card in moduleCards" :key="card.title" class="feature-card">
-          <div class="icon-chip">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 7h14M5 12h14M5 17h14" />
-            </svg>
-          </div>
-          <h3>{{ card.title }}</h3>
-          <p>{{ card.text }}</p>
-        </article>
-      </div>
-    </div>
-
-    <div class="grid two">
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">平台能力</p>
-            <h3>当前管理系统已覆盖的关键特性</h3>
-          </div>
-        </div>
-
-        <div class="badge-grid">
-          <div class="badge-item">多格式简历解析</div>
-          <div class="badge-item">Redis Stream 异步流</div>
-          <div class="badge-item">Skill 驱动出题</div>
-          <div class="badge-item">统一评估引擎</div>
-          <div class="badge-item">实时语音问答</div>
-          <div class="badge-item">RAG 检索问答</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">使用建议</p>
-            <h3>推荐的后台操作顺序</h3>
-          </div>
-        </div>
-
-        <div class="list">
-          <article class="item">先在简历管理完成上传与解析，再根据分析结果决定是否进入模拟面试。</article>
-          <article class="item">对于重点候选人，优先结合知识库补充岗位材料，再进入文字或语音面试训练。</article>
-          <article class="item">最后通过面试安排页统一管理邀请、提醒和状态流转，避免流程散落。</article>
-        </div>
-      </div>
-    </div>
-  </section>
+            <TypographyTitle :level="3" style="margin: 0">{{ plan.name }}</TypographyTitle>
+            <div style="margin: 12px 0">
+              <TypographyTitle :level="2" style="margin: 0; display: inline">{{ plan.price }}</TypographyTitle>
+              <TypographyText type="secondary">{{ plan.period }}</TypographyText>
+            </div>
+            <List :data-source="plan.features" size="small" :split="false">
+              <template #renderItem="{ item }">
+                <ListItem style="padding: 4px 0; border: none">
+                  <TypographyText>{{ item }}</TypographyText>
+                </ListItem>
+              </template>
+            </List>
+            <Button type="primary" block style="margin-top: 16px" :ghost="!plan.featured">
+              {{ plan.featured ? '立即开始' : '选择版本' }}
+            </Button>
+          </Card>
+        </Col>
+      </Row>
+    </Card>
+  </div>
 </template>

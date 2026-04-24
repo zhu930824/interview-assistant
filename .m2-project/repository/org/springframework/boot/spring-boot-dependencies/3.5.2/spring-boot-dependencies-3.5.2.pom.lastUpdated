@@ -1,5 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Fri Apr 24 15:45:18 CST 2026
-http\://192.168.1.211\:8081/repository/maven-public/.error=Could not transfer artifact org.springframework.boot\:spring-boot-dependencies\:pom\:3.5.2 from/to nexus (http\://192.168.1.211\:8081/repository/maven-public)\: 192.168.1.211\:8081 failed to respond
-http\://maven.aliyun.com/nexus/content/repositories/central/.lastUpdated=1777016718327
-@default-nexus-http\://192.168.1.211\:8081/repository/maven-public/.lastUpdated=1777016680324

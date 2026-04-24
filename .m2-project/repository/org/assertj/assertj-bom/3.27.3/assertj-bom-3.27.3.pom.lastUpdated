@@ -1,6 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Fri Apr 24 15:01:59 CST 2026
-@default-alimaven-http\://maven.aliyun.com/nexus/content/repositories/central/.lastUpdated=1777014119892
-@default-nexus-http\://192.168.1.211\:8081/repository/maven-public/.lastUpdated=1777014075446
-http\://192.168.1.211\:8081/repository/maven-public/.error=Could not transfer artifact org.assertj\:assertj-bom\:pom\:3.27.3 from/to nexus (http\://192.168.1.211\:8081/repository/maven-public)\: 192.168.1.211\:8081 failed to respond
-http\://maven.aliyun.com/nexus/content/repositories/central/.error=Could not transfer artifact org.assertj\:assertj-bom\:pom\:3.27.3 from/to alimaven (http\://maven.aliyun.com/nexus/content/repositories/central/)\: Connect to maven.aliyun.com\:443 [maven.aliyun.com/198.18.0.174] failed\: Read timed out

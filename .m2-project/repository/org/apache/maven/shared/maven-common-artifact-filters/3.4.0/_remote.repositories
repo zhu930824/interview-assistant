@@ -1,6 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Fri Apr 24 16:06:36 CST 2026
-maven-common-artifact-filters-3.4.0.jar>aliyun-public-mirror=
-maven-common-artifact-filters-3.4.0.jar>nexus=
-maven-common-artifact-filters-3.4.0.pom>aliyun-public-mirror=
-maven-common-artifact-filters-3.4.0.pom>nexus=

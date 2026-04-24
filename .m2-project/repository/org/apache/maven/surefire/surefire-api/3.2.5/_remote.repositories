@@ -1,6 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Fri Apr 24 16:06:18 CST 2026
-surefire-api-3.2.5.jar>aliyun-public-mirror=
-surefire-api-3.2.5.jar>nexus=
-surefire-api-3.2.5.pom>aliyun-public-mirror=
-surefire-api-3.2.5.pom>nexus=
