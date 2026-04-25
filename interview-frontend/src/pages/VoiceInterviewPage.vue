@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
   Row, Col, Card, Button, Space, TypographyText, Timeline, TimelineItem,
   List, ListItem, Descriptions, DescriptionsItem, Textarea, Empty, message, Tag,
@@ -10,7 +10,10 @@ import {
   PauseOutlined,
   CaretRightOutlined,
   DownloadOutlined,
+  AudioOutlined,
+  AudioMutedOutlined,
 } from '@ant-design/icons-vue'
+import { useSpeechRecognition } from '../composables/useSpeechRecognition'
 import { http } from '../api/http'
 import type { ApiResponse, VoiceInterviewSession } from '../types'
 import { translateVoiceEvent } from '../utils/display'
@@ -21,6 +24,17 @@ const sessionId = ref('')
 const transcript = ref('')
 const events = ref<string[]>([])
 let socket: WebSocket | null = null
+
+const {
+  isSupported: speechSupported,
+  isListening,
+  interimText,
+  error: speechError,
+  start: startSpeech,
+  stop: stopSpeech
+} = useSpeechRecognition()
+
+const showInterim = ref(false)
 
 const currentSession = computed(
   () => sessions.value.find((s) => s.sessionId === sessionId.value) ?? null
@@ -102,6 +116,35 @@ const downloadReport = () => {
   window.open(`/api/voice-interviews/${sessionId.value}/report`, '_blank')
 }
 
+// 监听语音识别结果
+watch(interimText, (newVal) => {
+  if (newVal && isListening.value === false) {
+    // 录音结束，将结果填入输入框
+    transcript.value = newVal
+    showInterim.value = false
+  } else if (newVal && isListening.value) {
+    // 录音中，显示临时结果
+    showInterim.value = true
+  }
+})
+
+// 监听错误
+watch(speechError, (newVal) => {
+  if (newVal) {
+    message.error(newVal)
+  }
+})
+
+// 开始录音
+const handleStartRecord = () => {
+  startSpeech()
+}
+
+// 停止录音
+const handleStopRecord = () => {
+  stopSpeech()
+}
+
 onMounted(load)
 </script>
 
@@ -166,6 +209,25 @@ onMounted(load)
           <template #icon><DownloadOutlined /></template>
           下载报告
         </Button>
+        <Button
+          v-if="!isListening"
+          type="primary"
+          :disabled="!speechSupported"
+          @click="handleStartRecord"
+          style="border-radius: 10px"
+        >
+          <template #icon><AudioOutlined /></template>
+          {{ speechSupported ? '开始录音' : '语音不可用' }}
+        </Button>
+        <Button
+          v-else
+          danger
+          @click="handleStopRecord"
+          style="border-radius: 10px"
+        >
+          <template #icon><AudioMutedOutlined /></template>
+          停止录音
+        </Button>
       </Space>
       <div style="margin-top: 12px">
         <TypographyText type="secondary">当前会话：{{ sessionId || '尚未选择' }}</TypographyText>
@@ -177,6 +239,17 @@ onMounted(load)
         <Card class="glass-section-card" title="手动提交转写" style="border: none">
           <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px; border-radius: 12px" />
           <Button type="primary" @click="sendTranscript" style="border-radius: 10px">提交文本</Button>
+
+          <!-- 录音状态指示 -->
+          <div v-if="isListening" style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+            <span class="recording-indicator"></span>
+            <TypographyText type="secondary">正在录音...</TypographyText>
+          </div>
+
+          <!-- 实时识别结果 -->
+          <div v-if="showInterim && interimText" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 8px;">
+            <TypographyText type="secondary" style="font-style: italic;">{{ interimText }}</TypographyText>
+          </div>
 
           <div v-if="currentSession" style="margin-top: 16px">
             <Descriptions :column="1" size="small" bordered>
@@ -228,3 +301,24 @@ onMounted(load)
     </Row>
   </div>
 </template>
+
+<style scoped>
+.recording-indicator {
+  width: 12px;
+  height: 12px;
+  background-color: #ff4d4f;
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+</style>
