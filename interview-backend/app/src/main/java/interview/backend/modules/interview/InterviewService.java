@@ -1,180 +1,160 @@
 package interview.backend.modules.interview;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import interview.backend.common.exception.BizException;
+import interview.backend.infrastructure.ai.AiService;
 import interview.backend.infrastructure.export.PdfExportService;
 import interview.backend.modules.interview.dto.CreateInterviewSessionRequest;
-import interview.backend.modules.interview.model.InterviewDirection;
-import interview.backend.modules.interview.model.InterviewQuestion;
-import interview.backend.modules.interview.model.InterviewSession;
-import interview.backend.modules.interview.model.InterviewStage;
+import interview.backend.modules.interview.model.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class InterviewService {
 
-    private final AtomicLong idGenerator = new AtomicLong(1);
-    private final Map<Long, InterviewSession> sessions = new ConcurrentHashMap<>();
+    private final InterviewSessionMapper sessionMapper;
+    private final InterviewQuestionMapper questionMapper;
     private final SkillService skillService;
     private final PdfExportService pdfExportService;
+    private final AiService aiService;
 
-    public InterviewService(SkillService skillService, PdfExportService pdfExportService) {
+    public InterviewService(
+            InterviewSessionMapper sessionMapper,
+            InterviewQuestionMapper questionMapper,
+            SkillService skillService,
+            PdfExportService pdfExportService,
+            AiService aiService
+    ) {
+        this.sessionMapper = sessionMapper;
+        this.questionMapper = questionMapper;
         this.skillService = skillService;
         this.pdfExportService = pdfExportService;
+        this.aiService = aiService;
     }
 
+    @Transactional
     public InterviewSession create(CreateInterviewSessionRequest request) {
-        var id = idGenerator.getAndIncrement();
+        var direction = InterviewDirection.valueOf(request.direction());
         var durations = distribute(request.totalMinutes());
-        var questions = buildQuestions(request.direction(), request.followUpRounds());
-        var now = LocalDateTime.now();
-        var session = new InterviewSession(
-                id,
-                request.direction(),
-                request.totalMinutes(),
-                durations,
-                request.followUpRounds(),
-                questions,
-                questions.isEmpty() ? null : questions.getFirst().id(),
-                "",
-                null,
-                "IN_PROGRESS",
-                now,
-                now
-        );
-        sessions.put(id, session);
-        return session;
+        var entity = new InterviewSessionEntity();
+        entity.setDirection(direction.name());
+        entity.setTotalMinutes(request.totalMinutes());
+        entity.setStageDurations(durations);
+        entity.setFollowUpRounds(request.followUpRounds());
+        entity.setStatus("IN_PROGRESS");
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+        sessionMapper.insert(entity);
+
+        var questions = buildQuestions(direction, request.followUpRounds());
+        for (int i = 0; i < questions.size(); i++) {
+            var q = questions.get(i);
+            var qEntity = InterviewQuestionEntity.create(q.id(), entity.getId(), q.stage().name(), q.content(), i);
+            questionMapper.insert(qEntity);
+        }
+
+        entity.setCurrentQuestionId(questions.isEmpty() ? null : questions.getFirst().id());
+        sessionMapper.updateById(entity);
+        return toSession(entity, questions);
     }
 
     public List<InterviewSession> list() {
-        return sessions.values().stream()
-                .sorted(Comparator.comparing(InterviewSession::updatedAt).reversed())
+        return sessionMapper.selectList(
+                new QueryWrapper<InterviewSessionEntity>().orderByDesc("updated_at")
+        ).stream()
+                .map(e -> toSession(e, loadQuestions(e.getId())))
                 .toList();
     }
 
     public InterviewSession continueSession(Long id) {
-        var session = sessions.get(id);
-        if (session == null) {
+        var entity = sessionMapper.selectById(id);
+        if (entity == null) {
             throw new BizException("Interview session not found");
         }
-        return session;
+        return toSession(entity, loadQuestions(id));
     }
 
+    @Transactional
     public InterviewSession answer(Long id, String answer) {
-        var session = continueSession(id);
-        if (!"IN_PROGRESS".equals(session.status())) {
+        var entity = sessionMapper.selectById(id);
+        if (entity == null) {
+            throw new BizException("Interview session not found");
+        }
+        if (!"IN_PROGRESS".equals(entity.getStatus())) {
             throw new BizException("Interview session is not accepting new answers");
         }
 
-        var currentQuestion = currentQuestion(session);
-        var updatedTranscript = session.transcript()
+        var questions = loadQuestions(id);
+        var currentQuestion = questions.stream()
+                .filter(q -> q.id().equals(entity.getCurrentQuestionId()))
+                .findFirst()
+                .orElseThrow(() -> new BizException("Current question not found"));
+
+        var updatedTranscript = (entity.getTranscript() == null ? "" : entity.getTranscript())
                 + "\nQ: " + currentQuestion.content()
                 + "\nA: " + answer.trim()
                 + "\n";
 
-        var nextQuestion = nextQuestion(session);
-        var updated = new InterviewSession(
-                session.id(),
-                session.direction(),
-                session.totalMinutes(),
-                session.stageDurations(),
-                session.followUpRounds(),
-                session.askedQuestions(),
-                nextQuestion == null ? null : nextQuestion.id(),
-                updatedTranscript.trim(),
-                session.evaluation(),
-                nextQuestion == null ? "READY_FOR_EVALUATION" : "IN_PROGRESS",
-                session.createdAt(),
-                LocalDateTime.now()
-        );
-        sessions.put(id, updated);
-        return updated;
+        var nextQuestion = findNextQuestion(questions, entity.getCurrentQuestionId());
+
+        entity.setTranscript(updatedTranscript.trim());
+        entity.setCurrentQuestionId(nextQuestion == null ? null : nextQuestion.id());
+        entity.setStatus(nextQuestion == null ? "READY_FOR_EVALUATION" : "IN_PROGRESS");
+        entity.setUpdatedAt(LocalDateTime.now());
+        sessionMapper.updateById(entity);
+
+        return toSession(entity, questions);
     }
 
+    @Transactional
     public InterviewSession evaluate(Long id, String transcript) {
-        var session = continueSession(id);
-        var effectiveTranscript = transcript == null || transcript.isBlank() ? session.transcript() : transcript;
-        var skillDefinition = skillService.loadDefinition(session.direction());
-        var score = calculateScore(effectiveTranscript, session.followUpRounds());
-        var strengths = List.of(
-                "Response structure is " + (effectiveTranscript.length() > 300 ? "complete" : "still somewhat short"),
-                "Relevant to direction: " + session.direction(),
-                "Skill checklist loaded successfully"
-        );
-        var risks = new ArrayList<String>();
-        if (effectiveTranscript.length() < 240) {
-            risks.add("Need deeper project details and more quantifiable impact.");
+        var entity = sessionMapper.selectById(id);
+        if (entity == null) {
+            throw new BizException("Interview session not found");
         }
-        if (!effectiveTranscript.toLowerCase().contains("trade-off")) {
-            risks.add("Trade-off thinking did not appear clearly.");
-        }
-        if (risks.isEmpty()) {
-            risks.add("No major weakness detected in the text sample.");
-        }
+        var effectiveTranscript = transcript == null || transcript.isBlank() ? entity.getTranscript() : transcript;
 
-        var evaluation = """
-                Overall Score: %s/100
-                Direction: %s
-                Follow-up Rounds: %s
-
-                Strengths:
-                - %s
-
-                Risks:
-                - %s
-
-                Skill Reference Preview:
-                %s
-
-                Transcript Summary:
-                %s
-                """.formatted(
-                score,
-                session.direction(),
-                session.followUpRounds(),
-                String.join("\n- ", strengths),
-                String.join("\n- ", risks),
-                preview(skillDefinition),
-                preview(effectiveTranscript.isBlank() ? "No transcript submitted." : effectiveTranscript)
+        var direction = InterviewDirection.valueOf(entity.getDirection());
+        var skillDefinition = skillService.loadDefinition(direction);
+        var aiResponse = aiService.chat(
+                "You are an interviewer evaluating candidate responses. Skill reference: " + skillDefinition,
+                "Evaluate this interview transcript:\n" + effectiveTranscript
         );
 
-        var updated = new InterviewSession(
-                session.id(),
-                session.direction(),
-                session.totalMinutes(),
-                session.stageDurations(),
-                session.followUpRounds(),
-                session.askedQuestions(),
-                session.currentQuestionId(),
-                effectiveTranscript,
-                evaluation,
-                "COMPLETED",
-                session.createdAt(),
-                LocalDateTime.now()
-        );
-        sessions.put(id, updated);
-        return updated;
+        var evaluation = parseEvaluation(aiResponse, entity, effectiveTranscript);
+
+        entity.setTranscript(effectiveTranscript);
+        entity.setEvaluation(evaluation);
+        entity.setStatus("COMPLETED");
+        entity.setUpdatedAt(LocalDateTime.now());
+        sessionMapper.updateById(entity);
+
+        return toSession(entity, loadQuestions(id));
     }
 
     public Map<String, Object> centerSummary() {
-        var summary = new HashMap<String, Object>();
-        summary.put("totalSessions", sessions.size());
-        summary.put("completedSessions", sessions.values().stream().filter(session -> "COMPLETED".equals(session.status())).count());
-        summary.put("activeSessions", sessions.values().stream().filter(session -> "IN_PROGRESS".equals(session.status())).count());
-        summary.put("readyForEvaluation", sessions.values().stream().filter(session -> "READY_FOR_EVALUATION".equals(session.status())).count());
-        summary.put("directions", sessions.values().stream().collect(
-                java.util.stream.Collectors.groupingBy(InterviewSession::direction, java.util.stream.Collectors.counting())
-        ));
-        return summary;
+        var total = sessionMapper.selectCount(null);
+        var completed = sessionMapper.selectCount(
+                new QueryWrapper<InterviewSessionEntity>().eq("status", "COMPLETED")
+        );
+        var active = sessionMapper.selectCount(
+                new QueryWrapper<InterviewSessionEntity>().eq("status", "IN_PROGRESS")
+        );
+        var ready = sessionMapper.selectCount(
+                new QueryWrapper<InterviewSessionEntity>().eq("status", "READY_FOR_EVALUATION")
+        );
+        var directions = sessionMapper.selectList(null).stream()
+                .collect(Collectors.groupingBy(InterviewSessionEntity::getDirection, Collectors.counting()));
+        return Map.of(
+                "totalSessions", total,
+                "completedSessions", completed,
+                "activeSessions", active,
+                "readyForEvaluation", ready,
+                "directions", directions
+        );
     }
 
     public List<Map<String, String>> directions() {
@@ -215,19 +195,66 @@ public class InterviewService {
                 session.followUpRounds(),
                 session.stageDurations(),
                 session.askedQuestions().stream().map(InterviewQuestion::content).toList(),
-                session.transcript().isBlank() ? "No transcript yet." : session.transcript(),
+                session.transcript() == null || session.transcript().isBlank() ? "No transcript yet." : session.transcript(),
                 session.evaluation() == null ? "No evaluation yet." : session.evaluation()
         );
         return pdfExportService.exportTextReport("Mock Interview Report", body);
     }
 
-    private Map<InterviewStage, Integer> distribute(int totalMinutes) {
-        var result = new LinkedHashMap<InterviewStage, Integer>();
-        result.put(InterviewStage.INTRODUCTION, Math.max(3, totalMinutes * 15 / 100));
-        result.put(InterviewStage.TECHNICAL, Math.max(6, totalMinutes * 45 / 100));
-        result.put(InterviewStage.PROJECT, Math.max(4, totalMinutes * 25 / 100));
+    private List<InterviewQuestion> loadQuestions(Long sessionId) {
+        return questionMapper.findBySessionIdOrderBySortOrder(sessionId).stream()
+                .map(e -> new InterviewQuestion(
+                        e.getId(),
+                        InterviewStage.valueOf(e.getStage()),
+                        e.getContent()
+                ))
+                .toList();
+    }
+
+    private InterviewSession toSession(InterviewSessionEntity entity, List<InterviewQuestion> questions) {
+        var stageDurations = entity.getStageDurations() != null
+                ? entity.getStageDurations().entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> InterviewStage.valueOf(e.getKey()),
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ))
+                : Map.<InterviewStage, Integer>of();
+
+        return new InterviewSession(
+                entity.getId(),
+                InterviewDirection.valueOf(entity.getDirection()),
+                entity.getTotalMinutes(),
+                stageDurations,
+                entity.getFollowUpRounds(),
+                questions,
+                entity.getCurrentQuestionId(),
+                entity.getTranscript() != null ? entity.getTranscript() : "",
+                entity.getEvaluation(),
+                entity.getStatus(),
+                entity.getCreatedAt(),
+                entity.getUpdatedAt()
+        );
+    }
+
+    private InterviewQuestion findNextQuestion(List<InterviewQuestion> questions, String currentId) {
+        if (currentId == null) return null;
+        for (int i = 0; i < questions.size(); i++) {
+            if (questions.get(i).id().equals(currentId)) {
+                return i + 1 >= questions.size() ? null : questions.get(i + 1);
+            }
+        }
+        return null;
+    }
+
+    private Map<String, Integer> distribute(int totalMinutes) {
+        var result = new LinkedHashMap<String, Integer>();
+        result.put("INTRODUCTION", Math.max(3, totalMinutes * 15 / 100));
+        result.put("TECHNICAL", Math.max(6, totalMinutes * 45 / 100));
+        result.put("PROJECT", Math.max(4, totalMinutes * 25 / 100));
         var used = result.values().stream().mapToInt(Integer::intValue).sum();
-        result.put(InterviewStage.QA, Math.max(2, totalMinutes - used));
+        result.put("QA", Math.max(2, totalMinutes - used));
         return result;
     }
 
@@ -252,32 +279,32 @@ public class InterviewService {
         return new InterviewQuestion(UUID.randomUUID().toString(), stage, content);
     }
 
-    private InterviewQuestion currentQuestion(InterviewSession session) {
-        return session.askedQuestions().stream()
-                .filter(question -> question.id().equals(session.currentQuestionId()))
-                .findFirst()
-                .orElseThrow(() -> new BizException("Current question not found"));
-    }
-
-    private InterviewQuestion nextQuestion(InterviewSession session) {
-        if (session.currentQuestionId() == null) {
-            return null;
+    private String parseEvaluation(String aiResponse, InterviewSessionEntity entity, String transcript) {
+        if (aiResponse != null && !aiResponse.isBlank()) {
+            return aiResponse;
         }
-        var questions = session.askedQuestions();
-        for (int i = 0; i < questions.size(); i++) {
-            if (questions.get(i).id().equals(session.currentQuestionId())) {
-                return i + 1 >= questions.size() ? null : questions.get(i + 1);
-            }
-        }
-        return null;
-    }
+        var score = Math.min(65, transcript.length() / 10) + 10;
+        var tradeOff = transcript.toLowerCase().contains("trade-off") ? 10 : 0;
+        var project = transcript.toLowerCase().contains("project") ? 10 : 0;
+        return """
+                Overall Score: %d/100
+                Direction: %s
+                Follow-up Rounds: %s
 
-    private int calculateScore(String transcript, int followUpRounds) {
-        var base = Math.min(65, transcript.length() / 10);
-        var tradeOffBonus = transcript.toLowerCase().contains("trade-off") ? 10 : 0;
-        var projectBonus = transcript.toLowerCase().contains("project") ? 10 : 0;
-        var followUpBonus = Math.min(10, followUpRounds * 3);
-        return Math.min(98, base + tradeOffBonus + projectBonus + followUpBonus + 10);
+                Strengths:
+                - Response structure is %s
+                - Relevant to direction: %s
+
+                Risks:
+                - %s
+                """.formatted(
+                Math.min(98, score + tradeOff + project),
+                entity.getDirection(),
+                entity.getFollowUpRounds(),
+                transcript.length() > 300 ? "complete" : "still somewhat short",
+                entity.getDirection(),
+                transcript.length() < 240 ? "Need deeper project details and more quantifiable impact." : "No major weakness detected in the text sample."
+        );
     }
 
     private String preview(String text) {

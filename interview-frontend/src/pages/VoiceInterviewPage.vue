@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import {
   Row, Col, Card, Button, Space, TypographyText, Timeline, TimelineItem,
-  List, ListItem, Descriptions, DescriptionsItem, Textarea, Empty, message,
+  List, ListItem, Descriptions, DescriptionsItem, Textarea, Empty, message, Tag,
 } from 'ant-design-vue'
 import {
   PlusOutlined,
@@ -14,6 +14,7 @@ import {
 import { http } from '../api/http'
 import type { ApiResponse, VoiceInterviewSession } from '../types'
 import { translateVoiceEvent } from '../utils/display'
+import AnimatedStatCard from '../components/AnimatedStatCard.vue'
 
 const sessions = ref<VoiceInterviewSession[]>([])
 const sessionId = ref('')
@@ -24,6 +25,13 @@ let socket: WebSocket | null = null
 const currentSession = computed(
   () => sessions.value.find((s) => s.sessionId === sessionId.value) ?? null
 )
+
+const activeCount = computed(() => sessions.value.filter(s => !s.paused).length)
+const pausedCount = computed(() => sessions.value.filter(s => s.paused).length)
+const totalDuration = computed(() => {
+  const total = sessions.value.reduce((sum, s) => sum + s.submittedTurns * 2, 0)
+  return Math.round(total)
+})
 
 const load = async () => {
   const res = await http.get<ApiResponse<VoiceInterviewSession[]>>('/voice-interviews')
@@ -99,25 +107,62 @@ onMounted(load)
 
 <template>
   <div style="display: flex; flex-direction: column; gap: 24px">
-    <Card>
+    <h1 class="page-title-animated">语音面试</h1>
+
+    <Row :gutter="[16, 16]">
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="sessions.length"
+          label="总会话数"
+          gradient="purple"
+          :icon="'🎙'"
+        />
+      </Col>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="pausedCount"
+          label="已暂停"
+          gradient="orange"
+          :icon="'⏸'"
+        />
+      </Col>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="activeCount"
+          label="进行中"
+          gradient="green"
+          :icon="'▶'"
+        />
+      </Col>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="totalDuration"
+          label="总时长(分钟)"
+          gradient="blue"
+          :icon="'⏱'"
+        />
+      </Col>
+    </Row>
+
+    <Card class="glass-section-card" style="border: none">
       <Space wrap>
-        <Button type="primary" @click="createSession">
+        <Button type="primary" @click="createSession" style="border-radius: 10px">
           <template #icon><PlusOutlined /></template>
           创建会话
         </Button>
-        <Button @click="connect">
+        <Button @click="connect" style="border-radius: 10px">
           <template #icon><LinkOutlined /></template>
           连接 WebSocket
         </Button>
-        <Button @click="pause">
+        <Button @click="pause" style="border-radius: 10px">
           <template #icon><PauseOutlined /></template>
           暂停
         </Button>
-        <Button @click="resume">
+        <Button @click="resume" style="border-radius: 10px">
           <template #icon><CaretRightOutlined /></template>
           恢复
         </Button>
-        <Button @click="downloadReport">
+        <Button @click="downloadReport" style="border-radius: 10px">
           <template #icon><DownloadOutlined /></template>
           下载报告
         </Button>
@@ -129,13 +174,17 @@ onMounted(load)
 
     <Row :gutter="[16, 16]">
       <Col :xs="24" :lg="12">
-        <Card title="手动提交转写">
-          <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px" />
-          <Button type="primary" @click="sendTranscript">提交文本</Button>
+        <Card class="glass-section-card" title="手动提交转写" style="border: none">
+          <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px; border-radius: 12px" />
+          <Button type="primary" @click="sendTranscript" style="border-radius: 10px">提交文本</Button>
 
           <div v-if="currentSession" style="margin-top: 16px">
             <Descriptions :column="1" size="small" bordered>
-              <DescriptionsItem label="暂停状态">{{ currentSession.paused ? '已暂停' : '进行中' }}</DescriptionsItem>
+              <DescriptionsItem label="暂停状态">
+                <Tag :color="currentSession.paused ? 'warning' : 'success'">
+                  {{ currentSession.paused ? '已暂停' : '进行中' }}
+                </Tag>
+              </DescriptionsItem>
               <DescriptionsItem label="当前题目">{{ currentSession.currentQuestion }}</DescriptionsItem>
               <DescriptionsItem label="已提交轮次">{{ currentSession.submittedTurns }}</DescriptionsItem>
             </Descriptions>
@@ -144,7 +193,7 @@ onMounted(load)
       </Col>
 
       <Col :xs="24" :lg="12">
-        <Card title="实时事件流">
+        <Card class="glass-section-card" title="实时事件流" style="border: none">
           <Timeline v-if="events.length">
             <TimelineItem v-for="(item, index) in events.slice(0, 20)" :key="index" color="blue">
               {{ item }}
@@ -157,7 +206,7 @@ onMounted(load)
 
     <Row :gutter="[16, 16]" v-if="currentSession">
       <Col :xs="24" :lg="12">
-        <Card title="字幕记录">
+        <Card class="glass-section-card" title="字幕记录" style="border: none">
           <List v-if="currentSession.subtitles.length > 0" :data-source="currentSession.subtitles" size="small">
             <template #renderItem="{ item }">
               <ListItem>{{ item }}</ListItem>
@@ -167,7 +216,7 @@ onMounted(load)
         </Card>
       </Col>
       <Col :xs="24" :lg="12">
-        <Card title="AI 追问">
+        <Card class="glass-section-card" title="AI 追问" style="border: none">
           <List v-if="currentSession.aiReplies.length > 0" :data-source="currentSession.aiReplies" size="small">
             <template #renderItem="{ item }">
               <ListItem>{{ item }}</ListItem>

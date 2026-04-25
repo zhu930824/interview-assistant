@@ -26,3 +26,9 @@ app:
     session-timeout-seconds: 300
   interview:
     skill-path: classpath:/skills
+  ai:
+    enabled: false
+    provider: stub
+    api-key: ""
+    model: ""
+    base-url: ""

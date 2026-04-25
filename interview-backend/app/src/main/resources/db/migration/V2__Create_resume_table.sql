@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS resume (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(500) NOT NULL,
+    content_hash VARCHAR(64) NOT NULL UNIQUE,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+    retry_count INT DEFAULT 0,
+    progress INT DEFAULT 0,
+    duplicated TINYINT(1) DEFAULT 0,
+    candidate_name VARCHAR(100),
+    target_position VARCHAR(100),
+    analysis_summary TEXT,
+    keywords JSON,
+    strengths JSON,
+    risks JSON,
+    raw_text_preview TEXT,
+    user_id BIGINT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_status (status),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

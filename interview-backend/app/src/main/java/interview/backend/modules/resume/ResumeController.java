@@ -2,7 +2,7 @@ package interview.backend.modules.resume;
 
 import interview.backend.common.result.ApiResponse;
 import interview.backend.modules.resume.dto.ResumeUploadResponse;
-import interview.backend.modules.resume.model.ResumeRecord;
+import interview.backend.modules.resume.model.Resume;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.ContentDisposition;
@@ -33,7 +33,7 @@ public class ResumeController {
     }
 
     @GetMapping
-    public ApiResponse<List<ResumeRecord>> list() {
+    public ApiResponse<List<Resume>> list() {
         return ApiResponse.success(resumeService.list());
     }
 
@@ -43,12 +43,12 @@ public class ResumeController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<ResumeRecord> detail(@PathVariable Long id) {
+    public ApiResponse<Resume> detail(@PathVariable Long id) {
         return ApiResponse.success(resumeService.detail(id));
     }
 
     @PostMapping("/{id}/retry")
-    public ApiResponse<ResumeRecord> retry(@PathVariable Long id) {
+    public ApiResponse<Resume> retry(@PathVariable Long id) {
         return ApiResponse.success("Retry scheduled", resumeService.retry(id));
     }
 

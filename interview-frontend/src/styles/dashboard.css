@@ -501,3 +501,235 @@
   background: var(--glass-bg) !important;
   border-color: var(--accent-primary) !important;
 }
+
+/* ===========================================
+   Animated Stat Cards for Functional Pages
+   =========================================== */
+
+.stat-card-animated {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: default;
+}
+
+.stat-card-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+}
+
+.stat-card-animated:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+}
+
+/* Gradient accent bar at top */
+.stat-card-animated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+}
+
+.stat-card-animated.gradient-purple::after {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card-animated.gradient-green::after {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stat-card-animated.gradient-orange::after {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-card-animated.gradient-blue::after {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Icon container with gradient background */
+.stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-icon-wrapper.gradient-purple {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+}
+
+.stat-icon-wrapper.gradient-green {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  box-shadow: 0 4px 15px rgba(17, 153, 142, 0.35);
+}
+
+.stat-icon-wrapper.gradient-orange {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 15px rgba(240, 147, 251, 0.35);
+}
+
+.stat-icon-wrapper.gradient-blue {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.35);
+}
+
+.stat-icon-wrapper .anticon {
+  font-size: 20px;
+  color: #ffffff;
+}
+
+/* Animated number */
+.stat-number-animated {
+  font-family: 'Geist Mono', 'SF Mono', -apple-system, monospace;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+  transition: all 0.3s ease;
+}
+
+.stat-label-animated {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Progress bar */
+.stat-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.stat-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease-out;
+}
+
+.stat-progress-fill.gradient-purple {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-progress-fill.gradient-green {
+  background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+}
+
+.stat-progress-fill.gradient-orange {
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-progress-fill.gradient-blue {
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Trend indicator */
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stat-trend.positive {
+  color: var(--accent-success);
+}
+
+.stat-trend.negative {
+  color: var(--accent-error);
+}
+
+/* Glass section card */
+.glass-section-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+.glass-section-card:hover {
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.12);
+}
+
+/* Page title styling */
+.page-title-animated {
+  font-family: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  letter-spacing: -0.01em;
+}
+
+/* Count-up animation keyframes */
+@keyframes countUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.count-up-enter {
+  animation: countUpFadeIn 0.5s ease-out forwards;
+}
+
+/* Pulse animation for icons */
+@keyframes iconPulse {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(102, 126, 234, 0.5);
+  }
+}
+
+.stat-icon-wrapper.pulse {
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.stat-icon-wrapper.gradient-green.pulse {
+  animation-name: iconPulseGreen;
+}
+
+@keyframes iconPulseGreen {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(17, 153, 142, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(17, 153, 142, 0.5);
+  }
+}

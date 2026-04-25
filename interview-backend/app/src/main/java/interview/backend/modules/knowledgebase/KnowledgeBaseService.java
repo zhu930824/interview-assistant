@@ -1,37 +1,40 @@
 package interview.backend.modules.knowledgebase;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import interview.backend.common.exception.BizException;
+import interview.backend.infrastructure.ai.AiService;
 import interview.backend.infrastructure.file.DocumentTextExtractor;
 import interview.backend.infrastructure.storage.LocalStorageService;
+import interview.backend.modules.knowledgebase.model.DocumentEntity;
 import interview.backend.modules.knowledgebase.model.KnowledgeDocument;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 @Service
 public class KnowledgeBaseService {
 
-    private final AtomicLong idGenerator = new AtomicLong(1);
-    private final Map<Long, KnowledgeDocument> documents = new ConcurrentHashMap<>();
-    private final Map<Long, String> filePaths = new ConcurrentHashMap<>();
-    private final Map<Long, String> documentContent = new ConcurrentHashMap<>();
+    private final DocumentMapper documentMapper;
     private final LocalStorageService storageService;
     private final DocumentTextExtractor textExtractor;
+    private final AiService aiService;
 
-    public KnowledgeBaseService(LocalStorageService storageService, DocumentTextExtractor textExtractor) {
+    public KnowledgeBaseService(
+            DocumentMapper documentMapper,
+            LocalStorageService storageService,
+            DocumentTextExtractor textExtractor,
+            AiService aiService
+    ) {
+        this.documentMapper = documentMapper;
         this.storageService = storageService;
         this.textExtractor = textExtractor;
+        this.aiService = aiService;
     }
 
     public KnowledgeDocument upload(MultipartFile file) {
@@ -39,38 +42,39 @@ public class KnowledgeBaseService {
             var filePath = storageService.save(file, "knowledge");
             var fileName = file.getOriginalFilename() == null ? "knowledge.txt" : file.getOriginalFilename();
             var content = textExtractor.extract(file.getInputStream(), fileName);
-            var chunks = Math.max(1, (int) Math.ceil(Math.max(content.length(), 1) / 500.0));
-            var keywords = extractKeywords(content);
-            var document = new KnowledgeDocument(
-                    idGenerator.getAndIncrement(),
-                    fileName,
-                    summarize(content),
-                    chunks,
-                    Math.max(1, content.length() / 4),
-                    keywords,
-                    LocalDateTime.now()
-            );
-            documents.put(document.id(), document);
-            filePaths.put(document.id(), filePath);
-            documentContent.put(document.id(), content);
-            return document;
+
+            var entity = new DocumentEntity();
+            entity.setFileName(fileName);
+            entity.setFilePath(filePath);
+            entity.setSummary(summarize(content));
+            entity.setChunks(Math.max(1, (int) Math.ceil(Math.max(content.length(), 1) / 500.0)));
+            entity.setTokenEstimate(Math.max(1, content.length() / 4));
+            entity.setKeywords(extractKeywords(content));
+            entity.setFullContent(content);
+            entity.setCreatedAt(LocalDateTime.now());
+            entity.setUpdatedAt(LocalDateTime.now());
+            documentMapper.insert(entity);
+
+            return toDocument(entity);
         } catch (IOException ex) {
             throw new BizException("Knowledge document upload failed: " + ex.getMessage());
         }
     }
 
     public List<KnowledgeDocument> list() {
-        return documents.values().stream()
-                .sorted(Comparator.comparing(KnowledgeDocument::createdAt).reversed())
+        return documentMapper.selectList(
+                new QueryWrapper<DocumentEntity>().orderByDesc("created_at")
+        ).stream()
+                .map(this::toDocument)
                 .toList();
     }
 
     public Map<String, Object> stats() {
-        var result = new java.util.LinkedHashMap<String, Object>();
-        result.put("totalDocuments", documents.size());
-        result.put("totalChunks", documents.values().stream().mapToInt(KnowledgeDocument::chunks).sum());
-        result.put("totalTokens", documents.values().stream().mapToInt(KnowledgeDocument::tokenEstimate).sum());
-        return result;
+        return Map.of(
+                "totalDocuments", documentMapper.selectCount(null),
+                "totalChunks", documentMapper.selectList(null).stream().mapToInt(DocumentEntity::getChunks).sum(),
+                "totalTokens", documentMapper.selectList(null).stream().mapToInt(DocumentEntity::getTokenEstimate).sum()
+        );
     }
 
     public SseEmitter chat(String question) {
@@ -86,12 +90,20 @@ public class KnowledgeBaseService {
                     return;
                 }
 
+                var contexts = new ArrayList<String>();
                 for (var match : matches) {
-                    var content = documentContent.getOrDefault(match.id(), "");
-                    emitter.send(SseEmitter.event().name("message").data("Using " + match.fileName() + ": " + summarize(content)));
+                    var entity = documentMapper.selectById(match.id());
+                    if (entity != null && entity.getFullContent() != null) {
+                        contexts.add(entity.getFullContent());
+                        emitter.send(SseEmitter.event().name("message").data("Using " + match.fileName() + ": " + match.summary()));
+                    }
                 }
 
-                emitter.send(SseEmitter.event().name("message").data("Answer: " + synthesizeAnswer(question, matches)));
+                var aiAnswer = aiService.chat(
+                        "You are a helpful assistant. Answer questions based on the provided context.",
+                        "Context:\n" + String.join("\n---\n", contexts) + "\n\nQuestion: " + question
+                );
+                emitter.send(SseEmitter.event().name("message").data("Answer: " + aiAnswer));
                 emitter.complete();
             } catch (Exception ex) {
                 emitter.completeWithError(ex);
@@ -100,50 +112,67 @@ public class KnowledgeBaseService {
         return emitter;
     }
 
+    public Flux<String> chatStream(String question) {
+        return aiService.chatStream(
+                "You are a helpful assistant.",
+                question
+        );
+    }
+
     public List<KnowledgeDocument> search(String question) {
         var normalizedQuestion = question == null ? "" : question.toLowerCase();
-        return documents.values().stream()
-                .sorted(Comparator.comparingInt((KnowledgeDocument doc) -> relevance(normalizedQuestion, doc)).reversed())
+        return documentMapper.selectList(null).stream()
+                .sorted(Comparator.comparingInt((DocumentEntity doc) -> relevance(normalizedQuestion, doc)).reversed())
                 .filter(doc -> relevance(normalizedQuestion, doc) > 0)
                 .limit(3)
+                .map(this::toDocument)
                 .toList();
     }
 
     public byte[] download(Long id) {
-        var path = filePaths.get(id);
-        if (path == null) {
+        var entity = documentMapper.selectById(id);
+        if (entity == null) {
             throw new BizException("Knowledge document not found");
         }
         try {
-            return Files.readAllBytes(Path.of(path));
+            return Files.readAllBytes(Path.of(entity.getFilePath()));
         } catch (IOException ex) {
             throw new BizException("Knowledge document download failed: " + ex.getMessage());
         }
     }
 
-    private int relevance(String question, KnowledgeDocument document) {
+    private int relevance(String question, DocumentEntity document) {
         var score = 0;
-        for (var keyword : document.keywords()) {
-            if (question.contains(keyword.toLowerCase())) {
-                score += 2;
+        var keywords = document.getKeywords();
+        if (keywords != null) {
+            for (var keyword : keywords) {
+                if (question.contains(keyword.toLowerCase())) {
+                    score += 2;
+                }
             }
         }
-        var content = documentContent.getOrDefault(document.id(), "").toLowerCase();
-        for (var token : question.split("\\s+")) {
-            if (!token.isBlank() && content.contains(token)) {
-                score++;
+        var content = document.getFullContent();
+        if (content != null) {
+            var lowerContent = content.toLowerCase();
+            for (var token : question.split("\\s+")) {
+                if (!token.isBlank() && lowerContent.contains(token)) {
+                    score++;
+                }
             }
         }
         return score;
     }
 
-    private String synthesizeAnswer(String question, List<KnowledgeDocument> matches) {
-        var snippets = new ArrayList<String>();
-        for (var match : matches) {
-            snippets.add(match.fileName() + ": " + match.summary());
-        }
-        return "Question `" + question + "` is most related to " + String.join(" | ", snippets)
-                + ". In a real deployment this response can be replaced by Spring AI + vector retrieval + model generation.";
+    private KnowledgeDocument toDocument(DocumentEntity entity) {
+        return new KnowledgeDocument(
+                entity.getId(),
+                entity.getFileName(),
+                entity.getSummary(),
+                entity.getChunks(),
+                entity.getTokenEstimate(),
+                entity.getKeywords() != null ? entity.getKeywords() : List.of(),
+                entity.getCreatedAt()
+        );
     }
 
     private List<String> extractKeywords(String content) {

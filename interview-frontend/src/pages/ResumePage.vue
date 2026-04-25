@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, h } from 'vue'
 import {
-  Row, Col, Card, Statistic, Upload, UploadDragger, Button, Table, Tag, Progress,
+  Row, Col, Card, Table, Tag, Button,
   Descriptions, DescriptionsItem, Popconfirm, Spin, Empty, message,
-  TypographyTitle,
+  TypographyTitle, Upload, UploadDragger, Progress,
 } from 'ant-design-vue'
 import {
   InboxOutlined,
@@ -13,6 +13,7 @@ import {
 import { http } from '../api/http'
 import type { ApiResponse, ResumeRecord } from '../types'
 import { formatDateTime, formatResumeStatus } from '../utils/display'
+import AnimatedStatCard from '../components/AnimatedStatCard.vue'
 
 const resumes = ref<ResumeRecord[]>([])
 const stats = ref<Record<string, number>>({})
@@ -20,6 +21,12 @@ const loading = ref(false)
 const uploading = ref(false)
 
 const selectedResume = computed(() => resumes.value[0] ?? null)
+
+const weekCount = computed(() => {
+  const weekAgo = new Date()
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  return resumes.value.filter(r => new Date(r.createdAt) >= weekAgo).length
+})
 
 const load = async () => {
   loading.value = true
@@ -106,35 +113,61 @@ onMounted(load)
 <template>
   <Spin :spinning="loading">
     <div style="display: flex; flex-direction: column; gap: 24px">
+      <h1 class="page-title-animated">简历分析</h1>
+
       <Row :gutter="[16, 16]">
-        <Col :xs="24" :sm="8">
-          <Card><Statistic title="总简历数" :value="stats.total ?? 0" /></Card>
+        <Col :xs="12" :sm="6">
+          <AnimatedStatCard
+            :value="stats.total ?? 0"
+            label="总简历数"
+            gradient="purple"
+            :icon="'📄'"
+          />
         </Col>
-        <Col :xs="24" :sm="8">
-          <Card><Statistic title="已完成" :value="stats.completed ?? 0" /></Card>
+        <Col :xs="12" :sm="6">
+          <AnimatedStatCard
+            :value="stats.completed ?? 0"
+            label="已完成"
+            gradient="green"
+            :icon="'✓'"
+          />
         </Col>
-        <Col :xs="24" :sm="8">
-          <Card><Statistic title="失败" :value="stats.failed ?? 0" /></Card>
+        <Col :xs="12" :sm="6">
+          <AnimatedStatCard
+            :value="stats.failed ?? 0"
+            label="失败"
+            gradient="orange"
+            :icon="'⚠'"
+          />
+        </Col>
+        <Col :xs="12" :sm="6">
+          <AnimatedStatCard
+            :value="weekCount"
+            label="本周新增"
+            gradient="blue"
+            :icon="'📅'"
+          />
         </Col>
       </Row>
 
-      <Card title="简历上传">
+      <Card class="glass-section-card" title="简历上传" style="border: none">
         <UploadDragger :custom-request="customUpload" :show-upload-list="false" :disabled="uploading">
-          <p><InboxOutlined style="font-size: 48px; color: var(--ant-color-primary)" /></p>
-          <p>点击或拖拽简历文件到此区域上传</p>
+          <p><InboxOutlined style="font-size: 48px; color: #6366f1" /></p>
+          <p style="font-size: 16px; font-weight: 500">点击或拖拽简历文件到此区域上传</p>
+          <p style="color: var(--text-secondary); font-size: 13px">支持 PDF、Word、图片格式</p>
         </UploadDragger>
       </Card>
 
       <Row :gutter="[16, 16]">
         <Col :xs="24" :lg="14">
-          <Card title="分析队列">
+          <Card class="glass-section-card" title="分析队列" style="border: none">
             <Table :columns="columns" :data-source="resumes" row-key="id" :pagination="false" size="middle">
               <template #emptyText><Empty description="暂无简历数据" /></template>
             </Table>
           </Card>
         </Col>
         <Col :xs="24" :lg="10">
-          <Card title="最新分析结果" v-if="selectedResume">
+          <Card class="glass-section-card" title="最新分析结果" v-if="selectedResume" style="border: none">
             <Descriptions :column="1" size="small" bordered>
               <DescriptionsItem label="候选人">{{ selectedResume.candidateName }}</DescriptionsItem>
               <DescriptionsItem label="目标岗位">{{ selectedResume.targetPosition }}</DescriptionsItem>
@@ -154,7 +187,7 @@ onMounted(load)
               </div>
             </div>
           </Card>
-          <Card v-else><Empty description="暂无分析结果" /></Card>
+          <Card v-else class="glass-section-card" style="border: none"><Empty description="暂无分析结果" /></Card>
         </Col>
       </Row>
     </div>
