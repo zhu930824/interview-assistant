@@ -1,6 +1,7 @@
 package interview.backend.common.handler;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,34 +14,40 @@ import org.apache.ibatis.type.MappedTypes;
 @MappedTypes(Map.class)
 public class JsonMapTypeHandler extends BaseTypeHandler<Map<String, Integer>> {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, Map<String, Integer> parameter, JdbcType jdbcType) throws SQLException {
-        ps.setString(i, JSON.toJSONString(parameter));
+        try {
+            ps.setString(i, MAPPER.writeValueAsString(parameter));
+        } catch (Exception e) {
+            throw new SQLException("Failed to serialize map to JSON", e);
+        }
     }
 
     @Override
     public Map<String, Integer> getNullableResult(ResultSet rs, String columnName) throws SQLException {
-        String value = rs.getString(columnName);
-        return parseMap(value);
+        return parseMap(rs.getString(columnName));
     }
 
     @Override
     public Map<String, Integer> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-        String value = rs.getString(columnIndex);
-        return parseMap(value);
+        return parseMap(rs.getString(columnIndex));
     }
 
     @Override
     public Map<String, Integer> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-        String value = cs.getString(columnIndex);
-        return parseMap(value);
+        return parseMap(cs.getString(columnIndex));
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, Integer> parseMap(String value) {
+    private Map<String, Integer> parseMap(String value) throws SQLException {
         if (value == null || value.isBlank()) {
             return Map.of();
         }
-        return JSON.parseObject(value, Map.class);
+        try {
+            return MAPPER.readValue(value, new TypeReference<Map<String, Integer>>() {});
+        } catch (Exception e) {
+            throw new SQLException("Failed to parse JSON to map", e);
+        }
     }
 }

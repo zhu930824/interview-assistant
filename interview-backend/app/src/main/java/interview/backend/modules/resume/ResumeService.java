@@ -1,7 +1,8 @@
 package interview.backend.modules.resume;
 
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import interview.backend.common.exception.BizException;
 import interview.backend.infrastructure.ai.AiService;
 import interview.backend.infrastructure.export.PdfExportService;
@@ -28,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ResumeService {
 
     private static final int PREVIEW_LIMIT = 240;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final ResumeMapper resumeMapper;
     private final LocalStorageService storageService;
@@ -249,6 +251,7 @@ public class ResumeService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private AnalysisResult parseAiResponse(String aiResponse, String originalText) {
         try {
             var json = aiResponse;
@@ -257,14 +260,14 @@ public class ResumeService {
                 int end = aiResponse.lastIndexOf("}") + 1;
                 json = aiResponse.substring(start, end);
             }
-            var parsed = JSON.parseObject(json);
+            var parsed = MAPPER.readValue(json, Map.class);
             return new AnalysisResult(
-                    parsed.getString("candidateName"),
-                    parsed.getString("targetPosition"),
-                    parsed.getString("summary"),
-                    parsed.getList("keywords", String.class),
-                    parsed.getList("strengths", String.class),
-                    parsed.getList("risks", String.class)
+                    (String) parsed.get("candidateName"),
+                    (String) parsed.get("targetPosition"),
+                    (String) parsed.get("summary"),
+                    (List<String>) parsed.get("keywords"),
+                    (List<String>) parsed.get("strengths"),
+                    (List<String>) parsed.get("risks")
             );
         } catch (Exception ex) {
             return new AnalysisResult(

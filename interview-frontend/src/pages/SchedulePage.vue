@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref, h } from 'vue'
+import { computed, onMounted, ref, h } from 'vue'
 import {
-  Row, Col, Card, Statistic, Table, Tag, Button, ButtonGroup,
+  Row, Col, Card, Table, Tag, Button, ButtonGroup,
   Collapse, CollapsePanel, List, ListItem, Textarea, Empty, message,
 } from 'ant-design-vue'
 import {
@@ -10,11 +10,18 @@ import {
 import { http } from '../api/http'
 import type { ApiResponse, InterviewSchedule } from '../types'
 import { formatDateTime, formatScheduleStatus } from '../utils/display'
+import AnimatedStatCard from '../components/AnimatedStatCard.vue'
 
 const schedules = ref<InterviewSchedule[]>([])
 const overview = ref<Record<string, number>>({})
 const calendar = ref<Record<string, InterviewSchedule[]>>({})
 const invitation = ref('')
+
+const monthCount = computed(() => {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  return schedules.value.filter(s => new Date(s.startTime) >= monthStart).length
+})
 
 const load = async () => {
   const [scheduleRes, overviewRes, calendarRes] = await Promise.all([
@@ -78,24 +85,46 @@ onMounted(load)
 
 <template>
   <div style="display: flex; flex-direction: column; gap: 24px">
+    <h1 class="page-title-animated">面试安排</h1>
+
     <Row :gutter="[16, 16]">
       <Col :xs="12" :sm="6">
-        <Card><Statistic title="总数" :value="overview.total ?? 0" /></Card>
+        <AnimatedStatCard
+          :value="overview.total ?? 0"
+          label="总数"
+          gradient="purple"
+          :icon="'📋'"
+        />
       </Col>
       <Col :xs="12" :sm="6">
-        <Card><Statistic title="待面试" :value="overview.pending ?? 0" /></Card>
+        <AnimatedStatCard
+          :value="overview.completed ?? 0"
+          label="已完成"
+          gradient="green"
+          :icon="'✓'"
+        />
       </Col>
       <Col :xs="12" :sm="6">
-        <Card><Statistic title="已完成" :value="overview.completed ?? 0" /></Card>
+        <AnimatedStatCard
+          :value="overview.pending ?? 0"
+          label="待面试"
+          gradient="orange"
+          :icon="'🕐'"
+        />
       </Col>
       <Col :xs="12" :sm="6">
-        <Card><Statistic title="已过期" :value="overview.expired ?? 0" /></Card>
+        <AnimatedStatCard
+          :value="monthCount"
+          label="本月安排"
+          gradient="blue"
+          :icon="'📅'"
+        />
       </Col>
     </Row>
 
-    <Card title="邀请解析">
-      <a-textarea v-model:value="invitation" :rows="4" placeholder="粘贴飞书、腾讯会议、Zoom 或邮件中的面试邀请内容" style="margin-bottom: 12px" />
-      <Button type="primary" @click="parseInvitation">
+    <Card class="glass-section-card" title="邀请解析" style="border: none">
+      <a-textarea v-model:value="invitation" :rows="4" placeholder="粘贴飞书、腾讯会议、Zoom 或邮件中的面试邀请内容" style="margin-bottom: 12px; border-radius: 12px" />
+      <Button type="primary" @click="parseInvitation" style="border-radius: 10px">
         <template #icon><ThunderboltOutlined /></template>
         解析邀请
       </Button>
@@ -103,14 +132,14 @@ onMounted(load)
 
     <Row :gutter="[16, 16]">
       <Col :xs="24" :lg="14">
-        <Card title="安排列表">
+        <Card class="glass-section-card" title="安排列表" style="border: none">
           <Table :columns="columns" :data-source="schedules" row-key="id" :pagination="false" size="middle">
             <template #emptyText><Empty description="暂无面试安排" /></template>
           </Table>
         </Card>
       </Col>
       <Col :xs="24" :lg="10">
-        <Card title="按日期查看">
+        <Card class="glass-section-card" title="按日期查看" style="border: none">
           <Collapse v-if="Object.keys(calendar).length" accordion>
             <CollapsePanel v-for="(items, day) in calendar" :key="day" :header="`${day} (${items.length} 场)`">
               <List :data-source="items" size="small">

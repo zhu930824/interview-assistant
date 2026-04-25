@@ -117,30 +117,6 @@ const featureModules = [
 
 const chartData = [42, 58, 74, 61, 88, 72, 85, 56, 92, 68, 78, 88]
 
-const pricingPlans = [
-  {
-    name: '免费版',
-    price: '¥0',
-    period: '/月',
-    features: ['5 份简历分析/月', '3 次模拟面试/月', '基础知识库', '邮件支持'],
-    featured: false,
-  },
-  {
-    name: '专业版',
-    price: '¥99',
-    period: '/月',
-    features: ['无限简历分析', '无限模拟面试', '语音面试功能', 'RAG 流式问答', '优先技术支持'],
-    featured: true,
-  },
-  {
-    name: '企业版',
-    price: '¥399',
-    period: '/月',
-    features: ['全部专业版功能', '团队协作空间', 'API 接入', '自定义品牌', '专属客户经理'],
-    featured: false,
-  },
-]
-
 const trustBadges = [
   { icon: SafetyCertificateOutlined, label: '企业级安全' },
   { icon: GlobalOutlined, label: '全球部署' },
@@ -313,42 +289,6 @@ const capabilities = [
           <div class="visual-center">
             <BulbOutlined />
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing Section -->
-    <section class="section-spacing">
-      <div class="section-header">
-        <h2 class="section-title">选择适合您的方案</h2>
-        <p class="section-subtitle">灵活定价，按需扩展</p>
-      </div>
-
-      <div class="pricing-grid">
-        <div
-          v-for="plan in pricingPlans"
-          :key="plan.name"
-          class="pricing-card"
-          :class="{ featured: plan.featured }"
-        >
-          <span v-if="plan.featured" class="pricing-badge">推荐</span>
-          <h3 class="pricing-name">{{ plan.name }}</h3>
-          <div class="pricing-price-row">
-            <span class="pricing-price">{{ plan.price }}</span>
-            <span class="pricing-period">{{ plan.period }}</span>
-          </div>
-          <div class="pricing-features">
-            <div v-for="feature in plan.features" :key="feature" class="pricing-feature">
-              <span class="pricing-feature-icon">✓</span>
-              {{ feature }}
-            </div>
-          </div>
-          <button
-            class="pricing-btn"
-            :class="{ primary: plan.featured }"
-          >
-            {{ plan.featured ? '立即开始' : '选择方案' }}
-          </button>
         </div>
       </div>
     </section>
@@ -706,59 +646,5 @@ const capabilities = [
   justify-content: center;
   font-size: 28px;
   color: white;
-}
-
-/* Pricing */
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .pricing-grid {
-    grid-template-columns: 1fr;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-}
-
-.pricing-price-row {
-  margin: 24px 0;
-}
-
-.pricing-features {
-  margin: 24px 0;
-  border-top: 1px solid var(--glass-border);
-  padding-top: 24px;
-}
-
-.pricing-btn {
-  width: 100%;
-  padding: 14px 28px;
-  border-radius: 12px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background: transparent;
-  border: 2px solid var(--glass-border);
-  color: var(--text-primary);
-}
-
-.pricing-btn.primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border: none;
-  color: white;
-  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-}
-
-.pricing-btn:hover {
-  transform: translateY(-2px);
-}
-
-.pricing-btn.primary:hover {
-  box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
 }
 </style>

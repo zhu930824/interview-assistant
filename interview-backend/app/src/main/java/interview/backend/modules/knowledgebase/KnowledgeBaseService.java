@@ -15,7 +15,6 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import reactor.core.publisher.Flux;
 
 @Service
 public class KnowledgeBaseService {
@@ -110,13 +109,6 @@ public class KnowledgeBaseService {
             }
         });
         return emitter;
-    }
-
-    public Flux<String> chatStream(String question) {
-        return aiService.chatStream(
-                "You are a helpful assistant.",
-                question
-        );
     }
 
     public List<KnowledgeDocument> search(String question) {

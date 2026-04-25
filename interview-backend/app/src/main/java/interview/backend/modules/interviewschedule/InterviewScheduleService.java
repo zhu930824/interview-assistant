@@ -1,7 +1,7 @@
 package interview.backend.modules.interviewschedule;
 
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import interview.backend.common.exception.BizException;
 import interview.backend.infrastructure.ai.AiService;
 import interview.backend.modules.interviewschedule.model.InterviewSchedule;
@@ -23,6 +23,7 @@ public class InterviewScheduleService {
     private static final Pattern LINK_PATTERN = Pattern.compile("(https?://\\S+)");
     private static final Pattern FULL_DATE_TIME_PATTERN = Pattern.compile("\\d{4}[-/]\\d{2}[-/]\\d{2}\\s+\\d{2}:\\d{2}");
     private static final Pattern SHORT_DATE_TIME_PATTERN = Pattern.compile("\\d{2}[-/]\\d{2}\\s+\\d{2}:\\d{2}");
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final ScheduleMapper scheduleMapper;
     private final AiService aiService;
@@ -109,6 +110,7 @@ public class InterviewScheduleService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private ScheduleExtraction parseAiExtraction(String aiResponse, String original) {
         try {
             var json = aiResponse;
@@ -117,12 +119,12 @@ public class InterviewScheduleService {
                 int end = aiResponse.lastIndexOf("}") + 1;
                 json = aiResponse.substring(start, end);
             }
-            var parsed = JSON.parseObject(json);
+            var parsed = MAPPER.readValue(json, Map.class);
             return new ScheduleExtraction(
-                    parsed.getString("company"),
-                    parsed.getString("position"),
-                    parsed.getString("meetingLink"),
-                    parseDateTime(parsed.getString("startTime")),
+                    (String) parsed.get("company"),
+                    (String) parsed.get("position"),
+                    (String) parsed.get("meetingLink"),
+                    parseDateTime((String) parsed.get("startTime")),
                     detectSource(original)
             );
         } catch (Exception ex) {

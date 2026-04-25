@@ -37,7 +37,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewSession create(CreateInterviewSessionRequest request) {
-        var direction = InterviewDirection.valueOf(request.direction());
+        var direction = request.direction();
         var durations = distribute(request.totalMinutes());
         var entity = new InterviewSessionEntity();
         entity.setDirection(direction.name());
@@ -120,11 +120,11 @@ public class InterviewService {
         var direction = InterviewDirection.valueOf(entity.getDirection());
         var skillDefinition = skillService.loadDefinition(direction);
         var aiResponse = aiService.chat(
-                "You are an interviewer evaluating candidate responses. Skill reference: " + skillDefinition,
-                "Evaluate this interview transcript:\n" + effectiveTranscript
+                "你是一位面试官，正在评估候选人的回答。技能参考：" + skillDefinition + "。请返回JSON格式：{\"totalScore\":数字,\"questionScores\":[{\"questionId\":\"q1\",\"questionContent\":\"题目内容\",\"score\":数字,\"comment\":\"评价\"}],\"strengths\":[\"优势1\"],\"risks\":[\"风险1\"],\"feedback\":\"总体反馈\"}",
+                "请评估以下面试记录，对每个回答分别评分(0-100)并计算总分：\n" + effectiveTranscript
         );
 
-        var evaluation = parseEvaluation(aiResponse, entity, effectiveTranscript);
+        var evaluation = parseEvaluation(aiResponse, effectiveTranscript);
 
         entity.setTranscript(effectiveTranscript);
         entity.setEvaluation(evaluation);
@@ -261,16 +261,16 @@ public class InterviewService {
     private List<InterviewQuestion> buildQuestions(InterviewDirection direction, int followUpRounds) {
         var skillPreview = preview(skillService.loadDefinition(direction));
         var questions = new ArrayList<InterviewQuestion>();
-        questions.add(question(InterviewStage.INTRODUCTION, "Please give a concise self-introduction focused on your recent experience."));
-        questions.add(question(InterviewStage.TECHNICAL, "What are the most important skills for " + direction.name().replace('_', ' ') + " and how have you used them?"));
-        questions.add(question(InterviewStage.TECHNICAL, "Describe a difficult technical issue you solved and explain the trade-offs you considered."));
-        questions.add(question(InterviewStage.PROJECT, "Pick one representative project and walk through goal, architecture, constraints, and measurable impact."));
-        questions.add(question(InterviewStage.QA, "If you could ask the interviewer only two questions, what would you ask and why?"));
+        questions.add(question(InterviewStage.INTRODUCTION, "请做一个简洁的自我介绍，重点突出你最近的工作经历和技术背景。"));
+        questions.add(question(InterviewStage.TECHNICAL, "作为" + direction.name().replace('_', ' ') + "方向，你认为最重要的技术能力是什么？你是如何运用这些能力的？"));
+        questions.add(question(InterviewStage.TECHNICAL, "请描述一个你解决过的技术难题，并说明你考虑的权衡取舍。"));
+        questions.add(question(InterviewStage.PROJECT, "请选择一个代表性项目，详细说明项目目标、技术架构、约束条件以及可衡量的业务影响。"));
+        questions.add(question(InterviewStage.QA, "如果你只能问面试官两个问题，你会问什么？为什么？"));
         for (int i = 1; i <= followUpRounds; i++) {
-            questions.add(question(InterviewStage.TECHNICAL, "Follow-up " + i + ": based on the previous answer, what would you improve if you had one more sprint?"));
+            questions.add(question(InterviewStage.TECHNICAL, "追问" + i + "：基于上一个回答，如果再给你一个冲刺周期，你会如何改进？"));
         }
         if (!skillPreview.isBlank()) {
-            questions.add(question(InterviewStage.TECHNICAL, "Skill file focus reminder: " + skillPreview));
+            questions.add(question(InterviewStage.TECHNICAL, "技能重点提醒：" + skillPreview));
         }
         return questions;
     }
@@ -279,31 +279,22 @@ public class InterviewService {
         return new InterviewQuestion(UUID.randomUUID().toString(), stage, content);
     }
 
-    private String parseEvaluation(String aiResponse, InterviewSessionEntity entity, String transcript) {
-        if (aiResponse != null && !aiResponse.isBlank()) {
+    private String parseEvaluation(String aiResponse, String transcript) {
+        // If AI returns valid JSON, return it directly
+        if (aiResponse != null && !aiResponse.isBlank() && aiResponse.trim().startsWith("{")) {
             return aiResponse;
         }
+        // Fallback: generate structured JSON
         var score = Math.min(65, transcript.length() / 10) + 10;
-        var tradeOff = transcript.toLowerCase().contains("trade-off") ? 10 : 0;
-        var project = transcript.toLowerCase().contains("project") ? 10 : 0;
-        return """
-                Overall Score: %d/100
-                Direction: %s
-                Follow-up Rounds: %s
-
-                Strengths:
-                - Response structure is %s
-                - Relevant to direction: %s
-
-                Risks:
-                - %s
-                """.formatted(
-                Math.min(98, score + tradeOff + project),
-                entity.getDirection(),
-                entity.getFollowUpRounds(),
-                transcript.length() > 300 ? "complete" : "still somewhat short",
-                entity.getDirection(),
-                transcript.length() < 240 ? "Need deeper project details and more quantifiable impact." : "No major weakness detected in the text sample."
+        var tradeOff = transcript.contains("权衡") || transcript.contains("取舍") ? 10 : 0;
+        var project = transcript.contains("项目") ? 10 : 0;
+        var totalScore = Math.min(98, score + tradeOff + project);
+        return String.format("""
+                {"totalScore":%d,"questionScores":[],"strengths":["回答结构%s"],"risks":["%s"],"feedback":"整体表现良好，建议在项目细节和量化成果方面进一步完善。"}
+                """,
+                totalScore,
+                transcript.length() > 300 ? "清晰完整" : "需要更完整",
+                transcript.length() < 240 ? "需要更深入的项目细节和可量化的业务影响说明" : "暂无明显短板"
         );
     }
 

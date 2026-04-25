@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref, h } from 'vue'
+import { computed, onMounted, ref, h } from 'vue'
 import {
-  Row, Col, Card, Statistic, Upload, UploadDragger, Button, Table, Tag,
-  List, ListItem, Textarea, Empty, message, TypographyParagraph, TypographyTitle,
+  Row, Col, Card, Table, Tag,
+  List, ListItem, Textarea, Empty, message, TypographyParagraph, Upload, UploadDragger, Button,
 } from 'ant-design-vue'
 import {
   InboxOutlined,
@@ -12,12 +12,18 @@ import {
 import { http } from '../api/http'
 import type { ApiResponse, KnowledgeDocument } from '../types'
 import { translateKnowledgeLine } from '../utils/display'
+import AnimatedStatCard from '../components/AnimatedStatCard.vue'
 
 const docs = ref<KnowledgeDocument[]>([])
 const stats = ref<Record<string, number>>({})
 const question = ref('')
 const streamOutput = ref<string[]>([])
 const uploading = ref(false)
+
+const categoryCount = computed(() => {
+  const categories = new Set(docs.value.flatMap(d => d.keywords ?? []))
+  return categories.size
+})
 
 const load = async () => {
   const [docRes, statsRes] = await Promise.all([
@@ -94,35 +100,61 @@ onMounted(load)
 
 <template>
   <div style="display: flex; flex-direction: column; gap: 24px">
+    <h1 class="page-title-animated">知识库</h1>
+
     <Row :gutter="[16, 16]">
-      <Col :xs="24" :sm="8">
-        <Card><Statistic title="文档数" :value="stats.totalDocuments ?? 0" /></Card>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="stats.totalDocuments ?? 0"
+          label="文档数"
+          gradient="purple"
+          :icon="'📚'"
+        />
       </Col>
-      <Col :xs="24" :sm="8">
-        <Card><Statistic title="分块数" :value="stats.totalChunks ?? 0" /></Card>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="categoryCount"
+          label="分类数"
+          gradient="green"
+          :icon="'📁'"
+        />
       </Col>
-      <Col :xs="24" :sm="8">
-        <Card><Statistic title="估算 Token" :value="stats.totalTokens ?? 0" /></Card>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="streamOutput.length"
+          label="问答次数"
+          gradient="orange"
+          :icon="'💬'"
+        />
+      </Col>
+      <Col :xs="12" :sm="6">
+        <AnimatedStatCard
+          :value="stats.totalTokens ?? 0"
+          label="Token 估算"
+          gradient="blue"
+          :icon="'🔢'"
+        />
       </Col>
     </Row>
 
     <Row :gutter="[16, 16]">
       <Col :xs="24" :lg="12">
-        <Card title="上传资料">
+        <Card class="glass-section-card" title="上传资料" style="border: none">
           <UploadDragger :custom-request="customUpload" :show-upload-list="false" :disabled="uploading">
-            <p><InboxOutlined style="font-size: 48px; color: var(--ant-color-primary)" /></p>
-            <p>点击或拖拽文件到此区域上传</p>
+            <p><InboxOutlined style="font-size: 48px; color: #6366f1" /></p>
+            <p style="font-size: 16px; font-weight: 500">点击或拖拽文件到此区域上传</p>
+            <p style="color: var(--text-secondary); font-size: 13px">支持 PDF、Word、Markdown 格式</p>
           </UploadDragger>
         </Card>
       </Col>
       <Col :xs="24" :lg="12">
-        <Card title="发起提问">
-          <a-textarea v-model:value="question" :rows="4" placeholder="输入一个与知识库相关的问题" style="margin-bottom: 12px" />
-          <Button type="primary" @click="ask">
+        <Card class="glass-section-card" title="发起提问" style="border: none">
+          <a-textarea v-model:value="question" :rows="4" placeholder="输入一个与知识库相关的问题" style="margin-bottom: 12px; border-radius: 12px" />
+          <Button type="primary" @click="ask" style="border-radius: 10px">
             <template #icon><SendOutlined /></template>
             开始流式问答
           </Button>
-          <div v-if="streamOutput.length" style="margin-top: 16px; padding: 12px; background: var(--ant-color-bg-layout); border-radius: 8px; max-height: 200px; overflow: auto">
+          <div v-if="streamOutput.length" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: 12px; max-height: 200px; overflow: auto; border: 1px solid rgba(99, 102, 241, 0.1)">
             <TypographyParagraph v-for="(line, i) in streamOutput" :key="i" style="margin: 4px 0">{{ line }}</TypographyParagraph>
           </div>
         </Card>
@@ -131,14 +163,14 @@ onMounted(load)
 
     <Row :gutter="[16, 16]">
       <Col :xs="24" :lg="14">
-        <Card title="资料列表">
+        <Card class="glass-section-card" title="资料列表" style="border: none">
           <Table :columns="columns" :data-source="docs" row-key="id" :pagination="false" size="middle">
             <template #emptyText><Empty description="暂无资料" /></template>
           </Table>
         </Card>
       </Col>
       <Col :xs="24" :lg="10">
-        <Card title="问答记录">
+        <Card class="glass-section-card" title="问答记录" style="border: none">
           <List v-if="streamOutput.length > 0" :data-source="streamOutput" size="small">
             <template #renderItem="{ item }">
               <ListItem>{{ item }}</ListItem>

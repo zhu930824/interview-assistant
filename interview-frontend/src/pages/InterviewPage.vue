@@ -3,18 +3,35 @@ import { computed, onMounted, ref, h } from 'vue'
 import {
   Row, Col, Card, Form, FormItem, Select, SelectOption,
   InputNumber, Button, List, ListItem, ListItemMeta, Tag, Alert, Space,
-  Empty, message, TypographyParagraph, TypographyTitle,
+  Empty, message, TypographyParagraph, TypographyTitle, Progress, Descriptions, DescriptionsItem,
 } from 'ant-design-vue'
 import {
   PlusOutlined,
   SendOutlined,
   FileSearchOutlined,
   DownloadOutlined,
+  CheckCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '../api/http'
 import type { ApiResponse, InterviewDirectionOption, InterviewSession } from '../types'
 import { formatDirection, formatInterviewStatus, formatStage } from '../utils/display'
 import AnimatedStatCard from '../components/AnimatedStatCard.vue'
+
+interface QuestionScore {
+  questionId: string
+  questionContent: string
+  score: number
+  comment: string
+}
+
+interface EvaluationResult {
+  totalScore: number
+  questionScores: QuestionScore[]
+  strengths: string[]
+  risks: string[]
+  feedback: string
+}
 
 const sessions = ref<InterviewSession[]>([])
 const directions = ref<InterviewDirectionOption[]>([])
@@ -44,8 +61,45 @@ const todayCount = computed(() => {
 const avgScore = computed(() => {
   const completed = sessions.value.filter(s => s.status === 'COMPLETED')
   if (completed.length === 0) return 0
-  return Math.round(completed.reduce((sum, s) => sum + (s.score ?? 75), 0) / completed.length)
+  const scores = completed.map(s => parseEvaluation(s.evaluation).totalScore)
+  return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
 })
+
+const parsedEvaluation = computed(() => {
+  if (!selectedSession.value?.evaluation) return null
+  return parseEvaluation(selectedSession.value.evaluation)
+})
+
+function parseEvaluation(evaluation: string | null): EvaluationResult {
+  if (!evaluation) {
+    return { totalScore: 0, questionScores: [], strengths: [], risks: [], feedback: '' }
+  }
+  try {
+    const parsed = JSON.parse(evaluation)
+    return {
+      totalScore: parsed.totalScore ?? 0,
+      questionScores: parsed.questionScores ?? [],
+      strengths: parsed.strengths ?? [],
+      risks: parsed.risks ?? [],
+      feedback: parsed.feedback ?? ''
+    }
+  } catch {
+    return { totalScore: 0, questionScores: [], strengths: [], risks: [], feedback: evaluation }
+  }
+}
+
+function getScoreColor(score: number): string {
+  if (score >= 90) return '#52c41a'
+  if (score >= 80) return '#1890ff'
+  if (score >= 70) return '#faad14'
+  return '#ff4d4f'
+}
+
+function getScoreStatus(score: number): 'success' | 'normal' | 'exception' {
+  if (score >= 80) return 'success'
+  if (score >= 60) return 'normal'
+  return 'exception'
+}
 
 const load = async () => {
   const [sessionRes, dirRes, centerRes] = await Promise.all([
@@ -186,6 +240,9 @@ onMounted(load)
                 <ListItemMeta>
                   <template #title>
                     <span>{{ formatDirection(item.direction) }}</span>
+                    <Tag v-if="item.status === 'COMPLETED'" color="green" style="margin-left: 8px">
+                      {{ parseEvaluation(item.evaluation).totalScore }}分
+                    </Tag>
                   </template>
                   <template #description>
                     <Tag :color="item.status === 'COMPLETED' ? 'success' : 'processing'">
@@ -230,7 +287,7 @@ onMounted(load)
               <template #icon><SendOutlined /></template>
               提交回答
             </Button>
-            <Button @click="evaluate">
+            <Button @click="evaluate" :disabled="selectedSession.status === 'COMPLETED'">
               <template #icon><FileSearchOutlined /></template>
               生成评估
             </Button>
@@ -242,13 +299,76 @@ onMounted(load)
 
           <TypographyTitle :level="5">会话记录</TypographyTitle>
           <TypographyParagraph>
-            <pre style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; overflow: auto; max-height: 200px; white-space: pre-wrap; border: 1px solid rgba(99, 102, 241, 0.1)">{{ selectedSession.transcript || '暂无作答记录。' }}</pre>
+            <pre style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; overflow: auto; max-height: 200px; white-space: pre-wrap; border: 1px solid rgba(99, 102, 241, 0.1); font-size: 13px">{{ selectedSession.transcript || '暂无作答记录。' }}</pre>
           </TypographyParagraph>
 
-          <TypographyTitle :level="5">评估结果</TypographyTitle>
-          <TypographyParagraph>
-            <pre style="background: rgba(16, 185, 129, 0.05); padding: 16px; border-radius: 12px; overflow: auto; max-height: 200px; white-space: pre-wrap; border: 1px solid rgba(16, 185, 129, 0.1)">{{ selectedSession.evaluation || '还没有生成评估结果。' }}</pre>
-          </TypographyParagraph>
+          <!-- 结构化评估结果展示 -->
+          <template v-if="parsedEvaluation && selectedSession.status === 'COMPLETED'">
+            <TypographyTitle :level="5">评估结果</TypographyTitle>
+
+            <div class="evaluation-container" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: 16px; padding: 24px; border: 1px solid rgba(99, 102, 241, 0.1)">
+              <!-- 总分展示 -->
+              <div style="text-align: center; margin-bottom: 24px">
+                <div style="font-size: 48px; font-weight: 700; color: #6366f1">{{ parsedEvaluation.totalScore }}</div>
+                <div style="font-size: 16px; color: #64748b">综合评分</div>
+                <Progress
+                  :percent="parsedEvaluation.totalScore"
+                  :stroke-color="getScoreColor(parsedEvaluation.totalScore)"
+                  :show-info="false"
+                  style="max-width: 300px; margin: 12px auto"
+                />
+              </div>
+
+              <!-- 单题评分 -->
+              <div v-if="parsedEvaluation.questionScores.length > 0" style="margin-bottom: 24px">
+                <div style="font-weight: 600; margin-bottom: 12px; color: #334155">各题评分</div>
+                <div v-for="(q, idx) in parsedEvaluation.questionScores" :key="q.questionId"
+                     style="background: rgba(255,255,255,0.5); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px">
+                  <div style="display: flex; justify-content: space-between; align-items: center">
+                    <span style="font-size: 13px; color: #475569">题目 {{ idx + 1 }}</span>
+                    <Tag :color="getScoreColor(q.score)">{{ q.score }}分 · {{ q.comment }}</Tag>
+                  </div>
+                  <div style="font-size: 12px; color: #64748b; margin-top: 4px">{{ q.questionContent }}</div>
+                </div>
+              </div>
+
+              <!-- 优势与风险 -->
+              <Row :gutter="16">
+                <Col :span="12">
+                  <div v-if="parsedEvaluation.strengths.length > 0" style="background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 16px">
+                    <div style="font-weight: 600; color: #10b981; margin-bottom: 8px">
+                      <CheckCircleOutlined style="margin-right: 6px" />亮点
+                    </div>
+                    <div v-for="s in parsedEvaluation.strengths" :key="s" style="font-size: 13px; color: #475569; padding: 4px 0">
+                      · {{ s }}
+                    </div>
+                  </div>
+                </Col>
+                <Col :span="12">
+                  <div v-if="parsedEvaluation.risks.length > 0" style="background: rgba(239, 68, 68, 0.08); border-radius: 12px; padding: 16px">
+                    <div style="font-weight: 600; color: #ef4444; margin-bottom: 8px">
+                      <WarningOutlined style="margin-right: 6px" />待改进
+                    </div>
+                    <div v-for="r in parsedEvaluation.risks" :key="r" style="font-size: 13px; color: #475569; padding: 4px 0">
+                      · {{ r }}
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+
+              <!-- 总体反馈 -->
+              <div v-if="parsedEvaluation.feedback" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: 12px">
+                <div style="font-weight: 600; color: #334155; margin-bottom: 8px">总体反馈</div>
+                <div style="font-size: 14px; color: #475569; line-height: 1.6">{{ parsedEvaluation.feedback }}</div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <TypographyTitle :level="5">评估结果</TypographyTitle>
+            <div style="padding: 32px; text-align: center; color: #94a3b8; background: rgba(99, 102, 241, 0.03); border-radius: 12px; border: 1px dashed rgba(99, 102, 241, 0.2)">
+              暂无评估结果，请完成所有题目后点击「生成评估」
+            </div>
+          </template>
         </Card>
         <Card v-else class="glass-section-card" style="border: none"><Empty description="请选择或创建一个面试会话" /></Card>
       </Col>

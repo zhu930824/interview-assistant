@@ -1,6 +1,7 @@
 package interview.backend.common.handler;
 
-import com.alibaba.fastjson2.JSON;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,33 +14,40 @@ import org.apache.ibatis.type.MappedTypes;
 @MappedTypes(List.class)
 public class JsonListTypeHandler extends BaseTypeHandler<List<String>> {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     @Override
     public void setNonNullParameter(PreparedStatement ps, int i, List<String> parameter, JdbcType jdbcType) throws SQLException {
-        ps.setString(i, JSON.toJSONString(parameter));
+        try {
+            ps.setString(i, MAPPER.writeValueAsString(parameter));
+        } catch (Exception e) {
+            throw new SQLException("Failed to serialize list to JSON", e);
+        }
     }
 
     @Override
     public List<String> getNullableResult(ResultSet rs, String columnName) throws SQLException {
-        String value = rs.getString(columnName);
-        return parseList(value);
+        return parseList(rs.getString(columnName));
     }
 
     @Override
     public List<String> getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
-        String value = rs.getString(columnIndex);
-        return parseList(value);
+        return parseList(rs.getString(columnIndex));
     }
 
     @Override
     public List<String> getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
-        String value = cs.getString(columnIndex);
-        return parseList(value);
+        return parseList(cs.getString(columnIndex));
     }
 
-    private List<String> parseList(String value) {
+    private List<String> parseList(String value) throws SQLException {
         if (value == null || value.isBlank()) {
             return List.of();
         }
-        return JSON.parseArray(value, String.class);
+        try {
+            return MAPPER.readValue(value, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            throw new SQLException("Failed to parse JSON to list", e);
+        }
     }
 }
