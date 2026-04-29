@@ -13,7 +13,7 @@ import {
   AudioOutlined,
   AudioMutedOutlined,
 } from '@ant-design/icons-vue'
-import { useSpeechRecognition } from '../composables/useSpeechRecognition'
+import { useRealtimeSpeech } from '../composables/useRealtimeSpeech'
 import { http } from '../api/http'
 import type { ApiResponse, VoiceInterviewSession } from '../types'
 import { translateVoiceEvent } from '../utils/display'
@@ -28,13 +28,15 @@ let socket: WebSocket | null = null
 const {
   isSupported: speechSupported,
   isListening,
+  isConnected,
   interimText,
+  finalText,
   error: speechError,
-  start: startSpeech,
-  stop: stopSpeech
-} = useSpeechRecognition()
-
-const showInterim = ref(false)
+  connect: connectSpeech,
+  disconnect: disconnectSpeech,
+  startRecording,
+  stopRecording
+} = useRealtimeSpeech()
 
 const currentSession = computed(
   () => sessions.value.find((s) => s.sessionId === sessionId.value) ?? null
@@ -94,6 +96,8 @@ const sendTranscript = async () => {
   await http.post(`/voice-interviews/${sessionId.value}/submit`, { transcript: transcript.value })
   socket?.send(transcript.value)
   transcript.value = ''
+  finalText.value = ''
+  interimText.value = ''
   await refreshDetail()
 }
 
@@ -116,18 +120,6 @@ const downloadReport = () => {
   window.open(`/api/voice-interviews/${sessionId.value}/report`, '_blank')
 }
 
-// 监听语音识别结果
-watch(interimText, (newVal) => {
-  if (newVal && isListening.value === false) {
-    // 录音结束，将结果填入输入框
-    transcript.value = newVal
-    showInterim.value = false
-  } else if (newVal && isListening.value) {
-    // 录音中，显示临时结果
-    showInterim.value = true
-  }
-})
-
 // 监听错误
 watch(speechError, (newVal) => {
   if (newVal) {
@@ -135,14 +127,23 @@ watch(speechError, (newVal) => {
   }
 })
 
+// 监听实时识别结果，更新到输入框
+watch([interimText, finalText], ([newInterim, newFinal]) => {
+  // 实时更新输入框：最终结果 + 正在识别的内容
+  transcript.value = newFinal + newInterim
+})
+
+// 是否可以提交（停止录音后才能提交）
+const canSubmit = computed(() => !isListening.value && transcript.value.trim().length > 0)
+
 // 开始录音
-const handleStartRecord = () => {
-  startSpeech()
+const handleStartRecord = async () => {
+  await startRecording()
 }
 
 // 停止录音
 const handleStopRecord = () => {
-  stopSpeech()
+  stopRecording()
 }
 
 onMounted(load)
@@ -238,17 +239,18 @@ onMounted(load)
       <Col :xs="24" :lg="12">
         <Card class="glass-section-card" title="手动提交转写" style="border: none">
           <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px; border-radius: var(--radius-lg)" />
-          <Button type="primary" @click="sendTranscript" style="border-radius: var(--radius-md)">提交文本</Button>
+          <Button type="primary" :disabled="!canSubmit" @click="sendTranscript" style="border-radius: var(--radius-md)">提交文本</Button>
 
           <!-- 录音状态指示 -->
-          <div v-if="isListening" style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-            <span class="recording-indicator"></span>
-            <TypographyText type="secondary">正在录音...</TypographyText>
-          </div>
-
-          <!-- 实时识别结果 -->
-          <div v-if="showInterim && interimText" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: var(--radius-md);">
-            <TypographyText type="secondary" style="font-style: italic;">{{ interimText }}</TypographyText>
+          <div v-if="isListening" style="margin-top: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="recording-indicator"></span>
+              <TypographyText type="secondary">正在录音并实时识别...</TypographyText>
+            </div>
+            <!-- 实时识别结果显示 -->
+            <div v-if="interimText || finalText" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: var(--radius-md);">
+              <TypographyText>{{ finalText }}<span style="color: #999;">{{ interimText }}</span></TypographyText>
+            </div>
           </div>
 
           <div v-if="currentSession" style="margin-top: 16px">

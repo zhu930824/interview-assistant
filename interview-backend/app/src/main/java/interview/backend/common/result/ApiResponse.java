@@ -17,4 +17,8 @@ public record ApiResponse<T>(
     public static <T> ApiResponse<T> failure(String message) {
         return new ApiResponse<>(false, message, null);
     }
+
+    public static <T> ApiResponse<T> error(int code, String message) {
+        return new ApiResponse<>(false, message, null);
+    }
 }

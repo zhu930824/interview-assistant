@@ -29,6 +29,7 @@ app:
   ai:
     enabled: false
     provider: stub
-    api-key: ""
-    model: ""
-    base-url: ""
+  speech:
+    alibaba:
+      api-key: sk-3ac8bc78e58e47bdbdb7787f114eca31
+      model: paraformer-realtime-v2

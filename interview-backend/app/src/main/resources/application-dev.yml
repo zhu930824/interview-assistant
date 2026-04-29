@@ -6,9 +6,10 @@ management:
 
 spring:
   datasource:
-    url: jdbc:mysql://192.168.1.196:3306/interview_assistant?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3306/interview_assistant?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
     username: root
-    password: u876mhpd
+    # password: u876mhpd
+    password: 520824
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
   flyway:
@@ -16,6 +17,18 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: "0"
+  ai:
+    model:
+      audio:
+        transcription: dashscope
+    dashscope:
+      api-key: sk-3ac8bc78e58e47bdbdb7787f114eca31
+      audio:
+        transcription:
+          options:
+            model: paraformer-v2
+            format: wav
+            sample-rate: 16000
 
 mybatis-plus:
   configuration:

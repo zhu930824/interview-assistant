@@ -24,6 +24,7 @@ export class WebSpeechService implements SpeechService {
   private _status: 'idle' | 'listening' = 'idle'
   private recognition: any = null
   private currentOptions: SpeechServiceOptions = {}
+  private finalTranscript: string = ''
 
   readonly isSupported: boolean
 
@@ -43,11 +44,12 @@ export class WebSpeechService implements SpeechService {
     }
 
     this.currentOptions = options
+    this.finalTranscript = '' // 重置累积文本
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     this.recognition = new SpeechRecognitionAPI()
 
     this.recognition.lang = options.lang || 'zh-CN'
-    this.recognition.continuous = false
+    this.recognition.continuous = true // 持续录音
     this.recognition.interimResults = true
 
     this.recognition.onstart = () => {
@@ -56,11 +58,22 @@ export class WebSpeechService implements SpeechService {
     }
 
     this.recognition.onresult = (event: any) => {
-      const result = event.results[event.results.length - 1]
-      const transcript = result[0].transcript
+      let interimTranscript = ''
+      // 遍历所有结果，累积 final 结果
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript
+        if (event.results[i].isFinal) {
+          this.finalTranscript += transcript
+        } else {
+          interimTranscript += transcript
+        }
+      }
+      // 返回累积的 final 文本 + 当前 interim 文本
+      const fullText = this.finalTranscript + interimTranscript
+      const isFinal = event.results[event.results.length - 1]?.isFinal ?? false
       this.currentOptions.onResult?.({
-        text: transcript,
-        isFinal: result.isFinal
+        text: fullText,
+        isFinal
       })
     }
 
