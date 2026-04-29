@@ -6,16 +6,12 @@ import {
   LayoutSider,
   LayoutHeader,
   LayoutContent,
-  Menu,
-  MenuItem,
   Breadcrumb,
   BreadcrumbItem,
   InputSearch,
-  Switch,
   Avatar,
   Dropdown,
   Menu as DropdownMenu,
-  TypographyText,
 } from 'ant-design-vue'
 import {
   DashboardOutlined,
@@ -30,6 +26,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   LogoutOutlined,
+  SettingOutlined,
 } from '@ant-design/icons-vue'
 import { useTheme } from '../theme'
 import { useAuth } from '../stores/auth'
@@ -78,8 +75,8 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
     <LayoutSider
       v-model:collapsed="collapsed"
       collapsible
-      :width="240"
-      :collapsed-width="72"
+      :width="220"
+      :collapsed-width="64"
       :trigger="null"
       class="sider-custom"
     >
@@ -88,30 +85,27 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
           <div class="brand-icon">
             <span>IM</span>
           </div>
-          <transition name="fade">
-            <span v-if="!collapsed" class="brand-text">面试管理</span>
-          </transition>
+          <span class="brand-text" :class="{ 'brand-text-hidden': collapsed }">面试管理</span>
         </RouterLink>
       </div>
 
-      <Menu
-        mode="inline"
-        :selected-keys="selectedKeys"
-        theme="dark"
-        class="sider-menu"
-      >
-        <MenuItem v-for="item in menuItems" :key="item.key" class="sider-menu-item">
-          <RouterLink :to="item.key" class="sider-menu-link">
-            <component :is="item.icon" class="sider-menu-icon" />
-            <span v-if="!collapsed">{{ item.label }}</span>
-          </RouterLink>
-        </MenuItem>
-      </Menu>
+      <nav class="sider-nav">
+        <RouterLink
+          v-for="item in menuItems"
+          :key="item.key"
+          :to="item.key"
+          class="nav-item"
+          :class="{ 'nav-item-active': selectedKeys.includes(item.key) }"
+        >
+          <div class="nav-icon">
+            <component :is="item.icon" />
+          </div>
+          <span class="nav-label" :class="{ 'nav-label-hidden': collapsed }">{{ item.label }}</span>
+        </RouterLink>
+      </nav>
 
       <div class="sider-footer">
-        <TypographyText type="secondary" class="sider-version">
-          {{ collapsed ? 'v0.1' : '系统在线 · v0.1.0' }}
-        </TypographyText>
+        <span class="sider-version">{{ collapsed ? 'v0.1' : 'v0.1.0' }}</span>
       </div>
     </LayoutSider>
 
@@ -130,19 +124,12 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
 
         <div class="header-right">
           <InputSearch
-            placeholder="全局搜索"
+            placeholder="全局搜索..."
             class="header-search"
             @search="onSearch"
           />
-          <div class="theme-toggle">
-            <Switch
-              :checked="isDark"
-              @change="toggleTheme"
-              class="theme-switch"
-            >
-              <template #checkedChildren><BulbFilled /></template>
-              <template #unCheckedChildren><BulbOutlined /></template>
-            </Switch>
+          <div class="theme-toggle" @click="toggleTheme">
+            <component :is="isDark ? BulbFilled : BulbOutlined" class="theme-icon" />
           </div>
           <Dropdown @click.prevent>
             <div class="user-info">
@@ -151,7 +138,9 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
             </div>
             <template #overlay>
               <DropdownMenu @click="handleMenuClick">
-                <DropdownMenu.Item key="settings">设置</DropdownMenu.Item>
+                <DropdownMenu.Item key="settings">
+                  <SettingOutlined /> 设置
+                </DropdownMenu.Item>
                 <DropdownMenu.Item key="logout">
                   <LogoutOutlined /> 退出登录
                 </DropdownMenu.Item>
@@ -173,18 +162,25 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
   position: sticky !important;
   top: 0;
   height: 100vh;
-  overflow: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  background: var(--color-card) !important;
+  border-right: 1px solid var(--color-border);
+  transition: width var(--transition-normal);
 }
 
 .sider-custom :deep(.ant-layout-sider-children) {
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 
+/* Brand */
 .sider-brand {
   padding: 20px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--color-border);
+  min-height: 72px;
+  display: flex;
+  align-items: center;
 }
 
 .sider-brand-link {
@@ -193,84 +189,135 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
   gap: 12px;
   color: inherit;
   text-decoration: none;
+  width: 100%;
 }
 
 .brand-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: white;
-  flex-shrink: 0;
 }
 
 .brand-text {
-  font-size: 16px;
+  font-family: var(--font-sans);
+  font-size: 15px;
   font-weight: 600;
-  color: white;
+  color: var(--text-primary);
   white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s ease, width 0.2s ease;
 }
 
-.sider-menu {
+.brand-text-hidden {
+  opacity: 0;
+  width: 0;
+}
+
+/* Navigation */
+.sider-nav {
   flex: 1;
-  border-inline-end: none !important;
-  padding: 8px;
+  padding: 12px 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.sider-menu-item {
-  border-radius: 10px !important;
-  margin-bottom: 4px !important;
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
 }
 
-.sider-menu-link {
-  color: inherit !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  text-decoration: none !important;
+.nav-item:hover {
+  background: var(--color-muted);
+  color: var(--text-primary);
 }
 
-.sider-menu-icon {
-  font-size: 18px !important;
+.nav-item-active {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
+.nav-item-active:hover {
+  background: var(--color-primary-light);
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.nav-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.nav-label-hidden {
+  opacity: 0;
+  width: 0;
+}
+
+/* Footer */
 .sider-footer {
   padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--color-border);
+  text-align: center;
 }
 
 .sider-version {
-  font-size: 12px !important;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
+/* Layout Main */
 .layout-main {
-  background: var(--colorBgLayout, #f8fafc) !important;
+  background: var(--color-background) !important;
 }
 
+/* Header */
 .header-custom {
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 0 28px !important;
+  background: var(--color-card) !important;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0 24px !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px !important;
-  line-height: 64px !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  height: 56px !important;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
+[data-theme='dark'] .sider-custom {
+  background: var(--color-card) !important;
+}
+
 [data-theme='dark'] .header-custom {
-  background: rgba(15, 15, 26, 0.8) !important;
-  border-bottom-color: rgba(255, 255, 255, 0.06);
+  background: var(--color-card) !important;
 }
 
 .header-left {
@@ -280,31 +327,31 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
 }
 
 .collapse-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
   background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  color: var(--text-primary);
-  transition: all 0.2s ease;
+  font-size: 15px;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
 }
 
 .collapse-btn:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-}
-
-[data-theme='dark'] .collapse-btn {
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--color-muted);
+  color: var(--text-primary);
 }
 
 .header-breadcrumb {
   font-size: 14px;
+}
+
+.header-breadcrumb :deep(.ant-breadcrumb-link) {
+  color: var(--text-secondary);
 }
 
 .header-right {
@@ -314,35 +361,62 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
 }
 
 .header-search {
-  width: 240px;
+  width: 200px;
 }
 
 .header-search :deep(.ant-input) {
-  border-radius: 10px !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+}
+
+.header-search :deep(.ant-input:focus) {
+  border-color: var(--color-primary) !important;
 }
 
 .theme-toggle {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
 }
 
-.theme-switch {
-  background: rgba(99, 102, 241, 0.15) !important;
+.theme-toggle:hover {
+  background: var(--color-muted);
+}
+
+.theme-icon {
+  font-size: 16px;
+  color: var(--text-secondary);
 }
 
 .header-avatar {
   cursor: pointer;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  background: var(--color-primary) !important;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.user-info:hover {
+  background: var(--color-muted);
 }
 
 .user-name {
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
@@ -355,17 +429,8 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
 }
 
 .content-custom {
-  padding: 32px !important;
+  padding: 24px !important;
   min-height: 280px;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 
 @media (max-width: 768px) {
@@ -373,7 +438,7 @@ const handleMenuClick = ({ key }: { key: string | number }) => {
     display: none;
   }
   .content-custom {
-    padding: 20px !important;
+    padding: 16px !important;
   }
 }
 </style>

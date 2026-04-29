@@ -7,7 +7,9 @@
       "Bash(mvn compile *)",
       "Bash(git push *)",
       "Bash(git commit *)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Read(//c/Users/1/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"SaaS interview platform professional glassmorphism data-visualization trust\" --design-system -p \"Interview Assistant\")"
     ]
   }
 }
