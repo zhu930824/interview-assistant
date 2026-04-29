@@ -123,8 +123,8 @@ onMounted(load)
     </Row>
 
     <Card class="glass-section-card" title="邀请解析" style="border: none">
-      <a-textarea v-model:value="invitation" :rows="4" placeholder="粘贴飞书、腾讯会议、Zoom 或邮件中的面试邀请内容" style="margin-bottom: 12px; border-radius: 12px" />
-      <Button type="primary" @click="parseInvitation" style="border-radius: 10px">
+      <a-textarea v-model:value="invitation" :rows="4" placeholder="粘贴飞书、腾讯会议、Zoom 或邮件中的面试邀请内容" style="margin-bottom: 12px; border-radius: var(--radius-lg)" />
+      <Button type="primary" @click="parseInvitation" style="border-radius: var(--radius-md)">
         <template #icon><ThunderboltOutlined /></template>
         解析邀请
       </Button>

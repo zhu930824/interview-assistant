@@ -233,7 +233,7 @@ onMounted(load)
           <List v-if="sessions.length > 0" :data-source="sessions" size="small">
             <template #renderItem="{ item }">
               <ListItem
-                style="cursor: pointer; border-radius: 8px; transition: all 0.2s"
+                style="cursor: pointer; border-radius: var(--radius-md); transition: all 0.2s"
                 :style="selectedId === item.id ? 'background: rgba(99, 102, 241, 0.1); padding: 8px 12px' : 'padding: 8px 12px'"
                 @click="selectedId = item.id"
               >
@@ -265,9 +265,9 @@ onMounted(load)
             :message="currentQuestion.content"
             type="info"
             show-icon
-            style="margin-bottom: 16px; border-radius: 12px"
+            style="margin-bottom: 16px; border-radius: var(--radius-lg)"
           />
-          <Alert v-else message="所有题目已完成，可以直接生成评估。" type="success" show-icon style="margin-bottom: 16px; border-radius: 12px" />
+          <Alert v-else message="所有题目已完成，可以直接生成评估。" type="success" show-icon style="margin-bottom: 16px; border-radius: var(--radius-lg)" />
 
           <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px">
             <Tag v-for="(minutes, stage) in selectedSession.stageDurations" :key="stage" color="blue">
@@ -279,7 +279,7 @@ onMounted(load)
             v-model:value="answer"
             :rows="4"
             placeholder="输入你的回答内容"
-            style="margin-bottom: 12px; border-radius: 12px"
+            style="margin-bottom: 12px; border-radius: var(--radius-lg)"
           />
 
           <Space style="margin-bottom: 16px">
@@ -299,14 +299,14 @@ onMounted(load)
 
           <TypographyTitle :level="5">会话记录</TypographyTitle>
           <TypographyParagraph>
-            <pre style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: 12px; overflow: auto; max-height: 200px; white-space: pre-wrap; border: 1px solid rgba(99, 102, 241, 0.1); font-size: 13px">{{ selectedSession.transcript || '暂无作答记录。' }}</pre>
+            <pre style="background: rgba(99, 102, 241, 0.05); padding: 16px; border-radius: var(--radius-lg); overflow: auto; max-height: 200px; white-space: pre-wrap; border: 1px solid rgba(99, 102, 241, 0.1); font-size: 13px">{{ selectedSession.transcript || '暂无作答记录。' }}</pre>
           </TypographyParagraph>
 
           <!-- 结构化评估结果展示 -->
           <template v-if="parsedEvaluation && selectedSession.status === 'COMPLETED'">
             <TypographyTitle :level="5">评估结果</TypographyTitle>
 
-            <div class="evaluation-container" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: 16px; padding: 24px; border: 1px solid rgba(99, 102, 241, 0.1)">
+            <div class="evaluation-container" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%); border-radius: var(--radius-xl); padding: 24px; border: 1px solid rgba(99, 102, 241, 0.1)">
               <!-- 总分展示 -->
               <div style="text-align: center; margin-bottom: 24px">
                 <div style="font-size: 48px; font-weight: 700; color: #6366f1">{{ parsedEvaluation.totalScore }}</div>
@@ -323,7 +323,7 @@ onMounted(load)
               <div v-if="parsedEvaluation.questionScores.length > 0" style="margin-bottom: 24px">
                 <div style="font-weight: 600; margin-bottom: 12px; color: #334155">各题评分</div>
                 <div v-for="(q, idx) in parsedEvaluation.questionScores" :key="q.questionId"
-                     style="background: rgba(255,255,255,0.5); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px">
+                     style="background: rgba(255,255,255,0.5); border-radius: var(--radius-lg); padding: 12px 16px; margin-bottom: 8px">
                   <div style="display: flex; justify-content: space-between; align-items: center">
                     <span style="font-size: 13px; color: #475569">题目 {{ idx + 1 }}</span>
                     <Tag :color="getScoreColor(q.score)">{{ q.score }}分 · {{ q.comment }}</Tag>
@@ -335,7 +335,7 @@ onMounted(load)
               <!-- 优势与风险 -->
               <Row :gutter="16">
                 <Col :span="12">
-                  <div v-if="parsedEvaluation.strengths.length > 0" style="background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 16px">
+                  <div v-if="parsedEvaluation.strengths.length > 0" style="background: rgba(16, 185, 129, 0.08); border-radius: var(--radius-lg); padding: 16px">
                     <div style="font-weight: 600; color: #10b981; margin-bottom: 8px">
                       <CheckCircleOutlined style="margin-right: 6px" />亮点
                     </div>
@@ -345,7 +345,7 @@ onMounted(load)
                   </div>
                 </Col>
                 <Col :span="12">
-                  <div v-if="parsedEvaluation.risks.length > 0" style="background: rgba(239, 68, 68, 0.08); border-radius: 12px; padding: 16px">
+                  <div v-if="parsedEvaluation.risks.length > 0" style="background: rgba(239, 68, 68, 0.08); border-radius: var(--radius-lg); padding: 16px">
                     <div style="font-weight: 600; color: #ef4444; margin-bottom: 8px">
                       <WarningOutlined style="margin-right: 6px" />待改进
                     </div>
@@ -357,7 +357,7 @@ onMounted(load)
               </Row>
 
               <!-- 总体反馈 -->
-              <div v-if="parsedEvaluation.feedback" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: 12px">
+              <div v-if="parsedEvaluation.feedback" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: var(--radius-lg)">
                 <div style="font-weight: 600; color: #334155; margin-bottom: 8px">总体反馈</div>
                 <div style="font-size: 14px; color: #475569; line-height: 1.6">{{ parsedEvaluation.feedback }}</div>
               </div>
@@ -365,7 +365,7 @@ onMounted(load)
           </template>
           <template v-else>
             <TypographyTitle :level="5">评估结果</TypographyTitle>
-            <div style="padding: 32px; text-align: center; color: #94a3b8; background: rgba(99, 102, 241, 0.03); border-radius: 12px; border: 1px dashed rgba(99, 102, 241, 0.2)">
+            <div style="padding: 32px; text-align: center; color: #94a3b8; background: rgba(99, 102, 241, 0.03); border-radius: var(--radius-lg); border: 1px dashed rgba(99, 102, 241, 0.2)">
               暂无评估结果，请完成所有题目后点击「生成评估」
             </div>
           </template>

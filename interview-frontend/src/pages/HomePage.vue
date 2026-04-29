@@ -451,7 +451,7 @@ const capabilities = [
   padding: 8px 16px;
   background: rgba(37, 99, 235, 0.15);
   border: 1px solid rgba(37, 99, 235, 0.3);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   font-size: 13px;
   font-weight: 500;
   color: #60a5fa;
@@ -651,7 +651,7 @@ const capabilities = [
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 24px;
   position: relative;
   overflow: hidden;
@@ -689,7 +689,7 @@ const capabilities = [
 .hero-stat-icon {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -702,7 +702,7 @@ const capabilities = [
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
 }
 
 .stat-trend.positive {
@@ -806,7 +806,7 @@ const capabilities = [
   padding: 6px 12px;
   background: rgba(16, 185, 129, 0.1);
   color: #10b981;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   font-weight: 500;
 }
 
@@ -926,7 +926,7 @@ const capabilities = [
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 20px;
   transition: all 0.3s ease;
 }
@@ -1051,7 +1051,7 @@ const capabilities = [
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 28px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -1130,7 +1130,7 @@ const capabilities = [
   padding: 4px 10px;
   background: var(--color-primary-light, rgba(99, 102, 241, 0.1));
   color: var(--color-primary, #6366F1);
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   font-weight: 500;
 }
 
@@ -1217,7 +1217,7 @@ const capabilities = [
   padding: 10px 20px;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
   border: 1px solid rgba(37, 99, 235, 0.15);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);

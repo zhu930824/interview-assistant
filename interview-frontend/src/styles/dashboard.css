@@ -455,6 +455,57 @@
   border-color: var(--color-primary) !important;
 }
 
+/* Inline form alignment */
+.glass-section-card .ant-form-inline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.glass-section-card .ant-form-inline .ant-form-item {
+  margin-bottom: 0;
+  margin-right: 0;
+  display: flex;
+  align-items: center;
+}
+
+.glass-section-card .ant-form-inline .ant-form-item-label {
+  padding-bottom: 0;
+  display: flex;
+  align-items: center;
+}
+
+.glass-section-card .ant-form-inline .ant-form-item-label > label {
+  height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.glass-section-card .ant-form-inline .ant-form-item-control-input {
+  min-height: 32px;
+}
+
+.glass-section-card .ant-form-inline .ant-select,
+.glass-section-card .ant-form-inline .ant-input-number,
+.glass-section-card .ant-form-inline .ant-btn {
+  height: 32px;
+}
+
+.glass-section-card .ant-form-inline .ant-select .ant-select-selector {
+  height: 32px !important;
+  display: flex;
+  align-items: center;
+}
+
+.glass-section-card .ant-form-inline .ant-input-number .ant-input-number-input {
+  height: 30px;
+}
+
+.glass-section-card .ant-form-inline .ant-btn {
+  padding: 4px 16px !important;
+}
+
 /* ===========================================
    Animated Stat Cards for Functional Pages
    =========================================== */
@@ -464,12 +515,14 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: 20px;
   position: relative;
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: default;
+  display: flex;
+  flex-direction: column;
 }
 
 .stat-card-animated::before {
@@ -517,7 +570,7 @@
 .stat-icon-wrapper {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -625,7 +678,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--glass-shadow);
   transition: all 0.3s ease;
 }

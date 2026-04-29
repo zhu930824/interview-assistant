@@ -73,8 +73,9 @@ watch(() => props.value, (newVal) => {
     <div class="stat-number-animated count-up-enter">{{ formattedValue }}</div>
     <div class="stat-label-animated">{{ label }}</div>
 
-    <div v-if="progress !== undefined" class="stat-progress-bar">
+    <div class="stat-progress-bar">
       <div
+        v-if="progress !== undefined"
         :class="['stat-progress-fill', `gradient-${gradient}`]"
         :style="{ width: `${Math.min(progress, 100)}%` }"
       />

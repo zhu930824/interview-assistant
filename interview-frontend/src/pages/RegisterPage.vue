@@ -306,7 +306,7 @@ const handleSubmit = async () => {
   height: 50px;
   background: linear-gradient(135deg, var(--primary), var(--accent));
   box-shadow: 0 8px 24px rgba(196, 133, 106, 0.25);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +347,7 @@ const handleSubmit = async () => {
 /* ── 聊天机器人预览 ── */
 .chatbot-preview {
   background: var(--card-bg);
-  border-radius: 24px;
+  border-radius: var(--radius-xl);
   padding: 22px;
   margin-bottom: 26px;
   box-shadow:
@@ -369,7 +369,7 @@ const handleSubmit = async () => {
   width: 44px;
   height: 44px;
   background: linear-gradient(135deg, var(--accent), var(--secondary));
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,7 +420,7 @@ const handleSubmit = async () => {
 .message {
   max-width: 85%;
   padding: 12px 16px;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -471,7 +471,7 @@ const handleSubmit = async () => {
   padding: 12px 16px;
   border: 1px solid rgba(0, 0, 0, 0.06);
   background: #faf8f5;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -481,7 +481,7 @@ const handleSubmit = async () => {
   height: 44px;
   border: none;
   background: linear-gradient(135deg, var(--accent), var(--accent-light));
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   color: white;
   font-size: 16px;
   cursor: pointer;
@@ -508,7 +508,7 @@ const handleSubmit = async () => {
   padding: 18px 12px;
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   color: var(--text-dark);
   font-size: 12px;
   font-weight: 500;
@@ -526,7 +526,7 @@ const handleSubmit = async () => {
   width: 38px;
   height: 38px;
   background: linear-gradient(135deg, var(--primary-light), var(--primary));
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -609,7 +609,7 @@ const handleSubmit = async () => {
   width: 56px;
   height: 56px;
   background: linear-gradient(135deg, var(--primary), var(--accent));
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -655,7 +655,7 @@ const handleSubmit = async () => {
   gap: 14px;
   padding: 16px 20px;
   background: rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.15);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
@@ -694,7 +694,7 @@ const handleSubmit = async () => {
   color: white;
   background: linear-gradient(135deg, var(--primary), var(--accent));
   border: none;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 8px 30px rgba(196, 133, 106, 0.35);

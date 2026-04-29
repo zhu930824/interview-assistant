@@ -149,12 +149,12 @@ onMounted(load)
       </Col>
       <Col :xs="24" :lg="12">
         <Card class="glass-section-card" title="发起提问" style="border: none">
-          <a-textarea v-model:value="question" :rows="4" placeholder="输入一个与知识库相关的问题" style="margin-bottom: 12px; border-radius: 12px" />
-          <Button type="primary" @click="ask" style="border-radius: 10px">
+          <a-textarea v-model:value="question" :rows="4" placeholder="输入一个与知识库相关的问题" style="margin-bottom: 12px; border-radius: var(--radius-lg)" />
+          <Button type="primary" @click="ask" style="border-radius: var(--radius-md)">
             <template #icon><SendOutlined /></template>
             开始流式问答
           </Button>
-          <div v-if="streamOutput.length" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: 12px; max-height: 200px; overflow: auto; border: 1px solid rgba(99, 102, 241, 0.1)">
+          <div v-if="streamOutput.length" style="margin-top: 16px; padding: 16px; background: rgba(99, 102, 241, 0.05); border-radius: var(--radius-lg); max-height: 200px; overflow: auto; border: 1px solid rgba(99, 102, 241, 0.1)">
             <TypographyParagraph v-for="(line, i) in streamOutput" :key="i" style="margin: 4px 0">{{ line }}</TypographyParagraph>
           </div>
         </Card>

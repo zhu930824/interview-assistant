@@ -189,23 +189,23 @@ onMounted(load)
 
     <Card class="glass-section-card" style="border: none">
       <Space wrap>
-        <Button type="primary" @click="createSession" style="border-radius: 10px">
+        <Button type="primary" @click="createSession" style="border-radius: var(--radius-md)">
           <template #icon><PlusOutlined /></template>
           创建会话
         </Button>
-        <Button @click="connect" style="border-radius: 10px">
+        <Button @click="connect" style="border-radius: var(--radius-md)">
           <template #icon><LinkOutlined /></template>
           连接 WebSocket
         </Button>
-        <Button @click="pause" style="border-radius: 10px">
+        <Button @click="pause" style="border-radius: var(--radius-md)">
           <template #icon><PauseOutlined /></template>
           暂停
         </Button>
-        <Button @click="resume" style="border-radius: 10px">
+        <Button @click="resume" style="border-radius: var(--radius-md)">
           <template #icon><CaretRightOutlined /></template>
           恢复
         </Button>
-        <Button @click="downloadReport" style="border-radius: 10px">
+        <Button @click="downloadReport" style="border-radius: var(--radius-md)">
           <template #icon><DownloadOutlined /></template>
           下载报告
         </Button>
@@ -214,7 +214,7 @@ onMounted(load)
           type="primary"
           :disabled="!speechSupported"
           @click="handleStartRecord"
-          style="border-radius: 10px"
+          style="border-radius: var(--radius-md)"
         >
           <template #icon><AudioOutlined /></template>
           {{ speechSupported ? '开始录音' : '语音不可用' }}
@@ -223,7 +223,7 @@ onMounted(load)
           v-else
           danger
           @click="handleStopRecord"
-          style="border-radius: 10px"
+          style="border-radius: var(--radius-md)"
         >
           <template #icon><AudioMutedOutlined /></template>
           停止录音
@@ -237,8 +237,8 @@ onMounted(load)
     <Row :gutter="[16, 16]">
       <Col :xs="24" :lg="12">
         <Card class="glass-section-card" title="手动提交转写" style="border: none">
-          <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px; border-radius: 12px" />
-          <Button type="primary" @click="sendTranscript" style="border-radius: 10px">提交文本</Button>
+          <a-textarea v-model:value="transcript" :rows="4" placeholder="输入识别后的语音文本或模拟字幕" style="margin-bottom: 12px; border-radius: var(--radius-lg)" />
+          <Button type="primary" @click="sendTranscript" style="border-radius: var(--radius-md)">提交文本</Button>
 
           <!-- 录音状态指示 -->
           <div v-if="isListening" style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
@@ -247,7 +247,7 @@ onMounted(load)
           </div>
 
           <!-- 实时识别结果 -->
-          <div v-if="showInterim && interimText" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: 8px;">
+          <div v-if="showInterim && interimText" style="margin-top: 8px; padding: 8px; background: #f5f5f5; border-radius: var(--radius-md);">
             <TypographyText type="secondary" style="font-style: italic;">{{ interimText }}</TypographyText>
           </div>
 
