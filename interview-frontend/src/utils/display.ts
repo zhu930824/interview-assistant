@@ -12,9 +12,14 @@ const directionMap: Record<string, string> = {
 };
 
 const resumeStatusMap: Record<string, string> = {
-  PENDING: "待分析",
+  UPLOADED: "已上传",
+  PARSING: "解析中",
+  PARSED: "待分析",
   ANALYZING: "分析中",
   COMPLETED: "已完成",
+  PARSE_FAILED: "解析失败",
+  ANALYSIS_FAILED: "分析失败",
+  PENDING: "待分析",
   FAILED: "失败"
 };
 

@@ -6,6 +6,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AdminLayout from './layouts/AdminLayout.vue'
 import HomePage from './pages/HomePage.vue'
 import ResumePage from './pages/ResumePage.vue'
+import ResumeDetailPage from './pages/ResumeDetailPage.vue'
 import InterviewPage from './pages/InterviewPage.vue'
 import VoiceInterviewPage from './pages/VoiceInterviewPage.vue'
 import SchedulePage from './pages/SchedulePage.vue'
@@ -39,6 +40,11 @@ const router = createRouter({
           path: 'resumes',
           component: ResumePage,
           meta: { title: '简历管理', breadcrumb: ['首页', '简历管理'] }
+        },
+        {
+          path: 'resumes/:id',
+          component: ResumeDetailPage,
+          meta: { title: '简历详情', breadcrumb: ['首页', '简历管理', '详情'] }
         },
         {
           path: 'interviews',

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, h } from 'vue'
+import { useRouter } from 'vue-router'
 import {
   Row, Col, Card, Table, Tag, Button,
   Descriptions, DescriptionsItem, Popconfirm, Spin, Empty, message,
@@ -9,11 +10,14 @@ import {
   InboxOutlined,
   DownloadOutlined,
   RedoOutlined,
+  EyeOutlined,
 } from '@ant-design/icons-vue'
 import { http } from '../api/http'
 import type { ApiResponse, ResumeRecord } from '../types'
 import { formatDateTime, formatResumeStatus } from '../utils/display'
 import AnimatedStatCard from '../components/AnimatedStatCard.vue'
+
+const router = useRouter()
 
 const resumes = ref<ResumeRecord[]>([])
 const stats = ref<Record<string, number>>({})
@@ -68,6 +72,10 @@ const downloadReport = (id: number) => {
   window.open(`/api/resumes/${id}/report`, '_blank')
 }
 
+const viewDetail = (id: number) => {
+  router.push(`/resumes/${id}`)
+}
+
 const columns = [
   { title: '文件名', dataIndex: 'fileName', key: 'fileName' },
   { title: '候选人', dataIndex: 'candidateName', key: 'candidateName' },
@@ -78,9 +86,14 @@ const columns = [
     key: 'status',
     customRender: ({ text }: { text: string }) => {
       const colorMap: Record<string, string> = {
-        PENDING: 'default',
+        UPLOADED: 'default',
+        PARSING: 'processing',
+        PARSED: 'default',
         ANALYZING: 'processing',
         COMPLETED: 'success',
+        PARSE_FAILED: 'error',
+        ANALYSIS_FAILED: 'error',
+        PENDING: 'default',
         FAILED: 'error',
       }
       return h(Tag, { color: colorMap[text] ?? 'default' }, () => formatResumeStatus(text))
@@ -96,12 +109,15 @@ const columns = [
     title: '操作',
     key: 'action',
     customRender: ({ record }: { record: ResumeRecord }) => {
+      const isParseFailed = record.status === 'PARSE_FAILED'
+      const isAnalysisFailed = record.status === 'ANALYSIS_FAILED' || record.status === 'FAILED'
       return h('div', { style: 'display: flex; gap: 8px' }, [
+        h(Button, { type: 'link', size: 'small', onClick: () => viewDetail(record.id) }, () => [h(EyeOutlined), ' 详情']),
         h(Button, { type: 'link', size: 'small', onClick: () => downloadReport(record.id) }, () => [h(DownloadOutlined), ' 下载']),
         h(Popconfirm, {
-          title: '确定重新分析？',
+          title: isParseFailed ? '确定重新上传？' : '确定重新分析？',
           onConfirm: () => retryResume(record.id),
-        }, () => h(Button, { type: 'link', size: 'small', disabled: record.status !== 'FAILED' }, () => [h(RedoOutlined), ' 重试'])),
+        }, () => h(Button, { type: 'link', size: 'small', disabled: !isParseFailed && !isAnalysisFailed }, () => [h(RedoOutlined), isParseFailed ? ' 重新上传' : ' 重试'])),
       ])
     },
   },
@@ -167,7 +183,7 @@ onMounted(load)
           </Card>
         </Col>
         <Col :xs="24" :lg="10">
-          <Card class="glass-section-card" title="最新分析结果" v-if="selectedResume" style="border: none">
+          <Card class="glass-section-card" title="最新分析结果" v-if="selectedResume" style="border: none; cursor: pointer" @click="viewDetail(selectedResume.id)">
             <Descriptions :column="1" size="small" bordered>
               <DescriptionsItem label="候选人">{{ selectedResume.candidateName }}</DescriptionsItem>
               <DescriptionsItem label="目标岗位">{{ selectedResume.targetPosition }}</DescriptionsItem>
